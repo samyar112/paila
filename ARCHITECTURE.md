@@ -7,6 +7,7 @@ Adding a new trek should feel like adding a product to a store, not writing new 
 That means:
 
 - Every screen reads `RouteDoc`, `MilestoneDoc`, `AssetBundleDoc`, and `JourneyDoc`.
+- `AssetBundleDoc` stores local-resolved asset references, never runtime CDN or Firebase URLs.
 - No component branches on route slug like `if (route.slug === 'ebc')`.
 - Pricing, paywall position, visual hero media, region labels, and route metadata all come from Firestore config.
 - Milestone ceremony behavior comes from `ceremonyType`, not hardcoded screen forks.
@@ -28,6 +29,7 @@ The one-time purchase promise means cost control must come from caching and rate
 - `RouteDoc.premiumContentDeliveryMode` should be `download_pack` for paid routes.
 - `RouteDoc.premiumContentPackId` points to a single downloadable package manifest.
 - Free route assets required for onboarding and the entire free journey live in the app package.
+- `AssetBundleDoc` references must resolve to bundled asset keys or extracted content-pack-relative paths, not remote URLs.
 - Premium route assets are downloaded once after purchase, verified by checksum, decompressed locally, and never auto-deleted.
 - After a successful premium pack download, milestone rendering must resolve assets from local filesystem paths only.
 - Re-download is allowed only if the pack version changes or integrity verification fails.

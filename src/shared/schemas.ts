@@ -109,10 +109,10 @@ export const routeSchema = z.object({
   isFreeRoute: z.boolean(),
   shortDescription: z.string().min(1),
   longDescription: z.string().min(1),
-  heroImageUrl: z.string().url(),
-  heroVideoUrl: z.string().url().optional(),
+  heroImageKey: z.string().min(1),
+  heroVideoKey: z.string().min(1).optional(),
   freeContentDeliveryMode: z.literal('bundled'),
-  premiumContentDeliveryMode: contentDeliveryModeSchema,
+  premiumContentDeliveryMode: z.literal('download_pack'),
   premiumContentPackId: z.string().min(1).nullable().optional(),
   paywallMilestoneId: z.string().min(1).nullable().optional(),
   paywallTriggerMeters: z.number().nonnegative().nullable().optional(),
@@ -143,10 +143,10 @@ export const routeSchema = z.object({
     });
   }
 
-  if (route.premiumContentDeliveryMode === 'download_pack' && !route.premiumContentPackId) {
+  if (!route.isFreeRoute && !route.premiumContentPackId) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: 'Download-pack routes must define premiumContentPackId.',
+      message: 'Paid routes must define premiumContentPackId.',
       path: ['premiumContentPackId'],
     });
   }
@@ -221,11 +221,16 @@ export const entitlementSchema = z.object({
   updatedAt: timestampLikeSchema,
 });
 
+const assetRefSchema = z.object({
+  source: z.enum(['bundled', 'content_pack']),
+  assetPath: z.string().min(1),
+});
+
 export const assetBundleSchema = z.object({
-  imageUrl: z.string().url(),
+  imageAsset: assetRefSchema,
   imageBlurhash: z.string().min(1).optional(),
-  videoUrl: z.string().url().optional(),
-  ambientAudioUrl: z.string().url().optional(),
+  videoAsset: assetRefSchema.optional(),
+  ambientAudioAsset: assetRefSchema.optional(),
   storyLines: z.array(z.string().min(1)),
   nepaliPhrase: z.string().min(1).optional(),
   pronunciation: z.string().min(1).optional(),

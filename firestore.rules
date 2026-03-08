@@ -105,6 +105,11 @@ service cloud.firestore {
       allow write, delete: if false;
     }
 
+    match /contentPacks/{contentPackId} {
+      allow read: if routeDoc(resource.data.routeId).data.isPublished == true;
+      allow write, delete: if false;
+    }
+
     match /weatherCache/{cacheKey} {
       allow read: if false;
       allow write, delete: if false;

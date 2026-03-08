@@ -50,13 +50,36 @@ type RouteDoc = {
   isFreeRoute: boolean;
   shortDescription: string;
   longDescription: string;
-  heroImageUrl: string;
-  heroVideoUrl?: string;
+  heroImageKey: string;
+  heroVideoKey?: string;
+  freeContentDeliveryMode: 'bundled';
+  premiumContentDeliveryMode: 'download_pack';
+  premiumContentPackId?: string | null;
   paywallMilestoneId?: string | null;
   paywallTriggerMeters?: number | null;
   polylineRef: string;
   bounds: { north: number; south: number; east: number; west: number };
   milestoneIds: string[];
+};
+
+type ContentPackDoc = {
+  routeId: string;
+  routeVersion: number;
+  deliveryMode: 'download_pack';
+  version: number;
+  downloadUrl: string;
+  checksumSha256: string;
+  compressedSizeBytes: number;
+  uncompressedSizeBytes: number;
+  wifiRecommended: boolean;
+  retainAfterDownload: true;
+  assets: Array<{
+    assetBundleId: string;
+    relativePath: string;
+    contentType: 'image' | 'video' | 'audio' | 'json';
+    checksumSha256: string;
+    sizeBytes: number;
+  }>;
 };
 
 type MilestoneDoc = {
@@ -165,6 +188,26 @@ function diffCalendarDays(startDate: string, endDate: string): number {
 
 function cacheKeyForLocation(locationKey: string): string {
   return locationKey.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+}
+
+function stepSnapshotInputsChanged(
+  before: StepSnapshotDoc | undefined,
+  after: StepSnapshotDoc,
+): boolean {
+  if (!before) {
+    return true;
+  }
+
+  return JSON.stringify(before.sources ?? {}) !== JSON.stringify(after.sources ?? {})
+    || before.timezone !== after.timezone
+    || before.localDate !== after.localDate;
+}
+
+async function getContentPack(
+  contentPackId: string,
+): Promise<ContentPackDoc | null> {
+  const snap = await db.collection('contentPacks').doc(contentPackId).get();
+  return snap.exists ? (snap.data() as ContentPackDoc) : null;
 }
 
 function timestampToMillis(
@@ -344,12 +387,22 @@ async function rebuildJourneyFromLedger(
 export const stepSnapshotUpdated = onDocumentWritten(
   'users/{userId}/stepSnapshots/{localDate}',
   async (event) => {
+    const before = event.data?.before;
     const after = event.data?.after;
     if (!after?.exists) {
       return;
     }
 
     const snapshot = after.data() as StepSnapshotDoc;
+    const previousSnapshot = before?.exists ? (before.data() as StepSnapshotDoc) : undefined;
+    if (!stepSnapshotInputsChanged(previousSnapshot, snapshot)) {
+      logger.info('Skipping step sync because only derived fields changed', {
+        userId: event.params.userId,
+        localDate: event.params.localDate,
+      });
+      return;
+    }
+
     const userId = event.params.userId;
     const localDate = event.params.localDate;
     const usage = await getUsageCounter(userId, localDate);
@@ -550,6 +603,23 @@ export const revenueCatEntitlementSync = onRequest(async (req, res) => {
   }
 
   if (isActive) {
+    const routeSnap = await db.collection('routes').doc(activeJourney.data.routeId).get();
+    if (!routeSnap.exists) {
+      throw new Error();
+    }
+
+    const route = routeSnap.data() as RouteDoc;
+    if (!route.isFreeRoute) {
+      if (!route.premiumContentPackId) {
+        throw new Error();
+      }
+
+      const contentPack = await getContentPack(route.premiumContentPackId);
+      if (!contentPack || contentPack.routeId !== activeJourney.data.routeId) {
+        throw new Error();
+      }
+    }
+
     await activeJourney.ref.set(
       {
         purchaseState: 'premium_unlocked',
