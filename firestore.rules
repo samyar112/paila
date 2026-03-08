@@ -1,0 +1,118 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function routeDoc(routeId) {
+      return get(/databases/$(database)/documents/routes/$(routeId));
+    }
+
+    function isPublishedRoute(routeId) {
+      return routeDoc(routeId).data.isPublished == true;
+    }
+
+    function unchanged(field) {
+      return request.resource.data[field] == resource.data[field];
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+
+      allow create: if isOwner(userId)
+        && request.resource.data.authUid == request.auth.uid;
+
+      allow update: if isOwner(userId)
+        && request.resource.data.authUid == resource.data.authUid
+        && request.resource.data.createdAt == resource.data.createdAt;
+
+      allow delete: if false;
+
+      match /stepSnapshots/{localDate} {
+        allow read: if isOwner(userId);
+
+        allow create, update: if isOwner(userId)
+          && request.resource.data.userId == userId
+          && request.resource.data.localDate == localDate;
+
+        allow delete: if false;
+      }
+
+      match /journeys/{journeyId} {
+        allow read: if isOwner(userId);
+
+        // Client can only create a fresh journey shell. Progression is server-managed.
+        allow create: if isOwner(userId)
+          && request.resource.data.userId == userId
+          && isPublishedRoute(request.resource.data.routeId)
+          && request.resource.data.totalStepsApplied == 0
+          && request.resource.data.progressMeters == 0
+          && request.resource.data.progressPercent == 0
+          && request.resource.data.currentMilestoneIndex == 0
+          && request.resource.data.unlockedMilestoneIds.size() == 0
+          && request.resource.data.streakDays == 0
+          && request.resource.data.longestStreakDays == 0;
+
+        // Only allow user-owned note-like updates from the client.
+        // Progress, unlocks, purchase state, freeze state, and completion are admin-only.
+        allow update: if false;
+        allow delete: if false;
+
+        match /ledger/{localDate} {
+          allow read: if isOwner(userId);
+          allow write, delete: if false;
+        }
+      }
+
+      match /badges/{badgeId} {
+        allow read: if isOwner(userId);
+        allow write, delete: if false;
+      }
+
+      match /entitlements/{entitlementId} {
+        allow read: if isOwner(userId);
+        allow write, delete: if false;
+      }
+
+      match /events/{eventId} {
+        allow read: if isOwner(userId);
+        allow write, delete: if false;
+      }
+
+      match /usageCounters/{localDate} {
+        allow read: if isOwner(userId);
+        allow write, delete: if false;
+      }
+    }
+
+    match /routes/{routeId} {
+      allow read: if resource.data.isPublished == true;
+      allow write, delete: if false;
+
+      match /milestones/{milestoneId} {
+        allow read: if isPublishedRoute(routeId);
+        allow write, delete: if false;
+      }
+    }
+
+    match /assetBundles/{assetBundleId} {
+      allow read: if true;
+      allow write, delete: if false;
+    }
+
+    match /weatherCache/{cacheKey} {
+      allow read: if false;
+      allow write, delete: if false;
+    }
+
+    match /badges/{badgeId} {
+      allow read: if true;
+      allow write, delete: if false;
+    }
+  }
+}
