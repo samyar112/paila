@@ -1,6 +1,8 @@
 # AGENTS.md — Paila (पाइला)
 
 > Read this file before every task. No exceptions.
+> Read SECURITY.md before every task that touches auth, storage, networking, payments, or health data.
+> Read ENGINEERING.md before writing any new class, service, or Cloud Function.
 > Last updated: March 2026
 > Maintained by: Claude (Architect) + Codex (Developer)
 
