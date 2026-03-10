@@ -12,6 +12,15 @@ That means:
 - Pricing, paywall position, visual hero media, region labels, and route metadata all come from Firestore config.
 - Milestone ceremony behavior comes from `ceremonyType`, not hardcoded screen forks.
 
+## Progression Model
+
+- Step reads are foreground-only. The app claims progress when the user opens the app.
+- No background step processing or passive progression.
+- A reached checkpoint pauses the journey immediately.
+- While paused at checkpoint, no further steps count until the user returns and chooses `Rest here` or `Keep walking today`.
+- `Keep walking today` only permits additional same-day foreground claims; it does not grant passive continuation.
+- `Keep walking today` expires at midnight. Unclaimed later steps from that day are lost.
+
 ## Cost Protection
 
 The one-time purchase promise means cost control must come from caching and rate limits, not entitlement expiry.
@@ -47,6 +56,11 @@ The one-time purchase promise means cost control must come from caching and rate
   Accepts `milestone`, `assetBundle`, `journey`, and `route`.
   Branches only on `milestone.ceremonyType`.
 
+- `CheckpointDecisionSheet`
+  Appears after checkpoint ceremony.
+  Presents `Rest here` and `Keep walking today`.
+  Owns the transition into paused vs resumed same-day progression.
+
 - `PurchaseInvitationScreen`
   Uses `route.priceUSD`, `route.isFreeRoute`, `route.paywallMilestoneId`, and milestone titles.
 
@@ -78,6 +92,9 @@ If a route requires code changes, the architecture has failed.
   no screen should know EBC pricing or paywall location directly.
 - Build a `StaticContentRepository` that serves `RouteDoc`, `MilestoneDoc`, and `AssetBundleDoc` from local cache first, then refreshes only when remote `updatedAt` or `version` changed.
 - Build a `StepSyncService` that debounces foreground syncs and respects the `10/day` contract before calling backend workflows.
+- Build progression around `claimed step deltas`, not raw daily totals reapplied on every open.
+- Persist enough journey state to know:
+  current checkpoint, last claimed source steps today, paused-at-checkpoint state, and whether `keep walking today` is still valid.
 - Build a `WeatherService` that reads local cache first, then calls the weather proxy only when the cached item is older than 6 hours.
 - Build a `ContentPackService` abstraction now:
   purchase success -> fetch manifest -> download zip/tar pack once -> verify checksums -> extract -> persist local index.
@@ -96,6 +113,20 @@ The following are intentionally route-driven today so later routes do not requir
 - badge association to milestones
 - share-card unlocks and completion ceremony
 - merchandising eligibility after completion
+
+## State Machine Notes
+
+- `active_toward_checkpoint`
+  user can claim newly walked steps on app open
+
+- `paused_at_checkpoint`
+  milestone reached, ceremony shown, waiting for user intention
+
+- `keep_walking_today`
+  same-day continuation allowed, but only via later foreground opens before midnight
+
+- `day_closed`
+  midnight boundary or explicit rest decision; next day requires a fresh claim cycle
 
 ## Client Caching Recommendations
 

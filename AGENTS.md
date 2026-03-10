@@ -245,9 +245,39 @@ NEVER:
   → Accept manual step entry — ever
   → Count steps from unverified sources
   → Backfill frozen paywall days
+  → Count steps passively in the background
+  → Move past a checkpoint without explicit user re-engagement
 
 ONE source wins per day. Period.
 Steps must be EARNED. Integrity of the journey is sacred.
+```
+
+## Progression Rules (NON-NEGOTIABLE)
+
+```
+Foreground only:
+  → Steps are claimed only when the user opens the app
+  → No background sync
+  → No passive progression
+
+Checkpoint arrival:
+  → When a checkpoint is reached, the journey pauses immediately
+  → Milestone ceremony fires
+  → No further steps count until the user returns and makes a choice
+
+User choice:
+  → Rest here
+      day ends at this checkpoint
+      tomorrow starts from here
+
+  → Keep walking today
+      progression resumes from that moment forward
+      user must open the app again later that same day to claim more steps
+
+Midnight:
+  → "Keep walking today" expires at midnight
+  → Unclaimed steps from later that day are lost
+  → Next day requires a fresh intentional check-in
 ```
 
 ---
@@ -304,11 +334,12 @@ Steps must be EARNED. Integrity of the journey is sacred.
   'manual' is NOT a valid source — ever
 
 → AssetBundleDoc uses asset keys, not URLs
-→ Journey progression is server-only (Cloud Functions)
+→ Step claiming starts on app foreground
+→ Server logic validates and persists progression rules
 → Ledger is append-only — never delete entries
 → Rebuild journey from ledger, not from delta math
 → Always store dates in user's LOCAL timezone
-→ Past days are final after 48-hour grace window
+→ Unclaimed same-day progress expires at midnight
 ```
 
 ---
@@ -316,7 +347,7 @@ Steps must be EARNED. Integrity of the journey is sacred.
 ## Cost Protection Rules
 
 ```
-→ Max 10 step syncs per user per day
+→ Max 10 foreground step claims per user per day
 → Max 4 weather calls per user per day
 → Cache map tiles after first load
 → Cache weather 6 hours per location
