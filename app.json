@@ -3,6 +3,8 @@
     "name": "Paila",
     "slug": "paila",
     "version": "1.0.0",
+    "jsEngine": "hermes",
+    "newArchEnabled": true,
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",

@@ -247,12 +247,12 @@ class JourneyStateMachine {
 }
 ```
 
-### Avoid `any`
+### No `any` — Ever
 ```typescript
 // ❌ WRONG
 const data: any = await fetchSomething();
 
-// ✅ RIGHT — prefer unknown + Zod to parse external data
+// ✅ RIGHT — use unknown + Zod to parse external data
 const result = journeySchema.safeParse(data);
 if (!result.success) throw new ValidationError(result.error);
 const journey: JourneyDoc = result.data;
@@ -362,9 +362,9 @@ function JourneyHomeScreen() {
 }
 ```
 
-### Error Boundaries on User-Critical Screens
+### Error Boundaries on Every Screen
 ```typescript
-// ✅ Wrap user-critical routes or navigator segments in an error boundary
+// ✅ Wrap every screen in an error boundary
 <ErrorBoundary fallback={<ErrorScreen />}>
   <JourneyHomeScreen />
 </ErrorBoundary>
