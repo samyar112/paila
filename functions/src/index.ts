@@ -3,167 +3,28 @@ import * as logger from 'firebase-functions/logger';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onRequest } from 'firebase-functions/v2/https';
 
+import type {
+  ContentPackDoc,
+  JourneyDoc,
+  JourneyLedgerDoc,
+  MilestoneDoc,
+  RouteDoc,
+  StepSnapshotDoc,
+  StepSource,
+  UsageCounterDoc,
+  WeatherCacheDoc,
+} from '../../src/shared/schemas';
+
 admin.initializeApp();
 
 const db = admin.firestore();
-const now = () => admin.firestore.Timestamp.now();
-
-type StepSource = 'healthkit' | 'health_connect' | 'phone_pedometer' | 'manual';
-type FreezeReason = 'paywall' | null;
-type CeremonyType = 'standard' | 'paywall' | 'completion';
-
-type StepSourceReading = {
-  steps: number;
-  fetchedAt: admin.firestore.Timestamp | string;
-  startAt: admin.firestore.Timestamp | string;
-  endAt: admin.firestore.Timestamp | string;
-  isComplete: boolean;
-  deviceLabel?: string;
-};
-
-type StepSnapshotDoc = {
-  userId: string;
-  localDate: string;
-  timezone: string;
-  sources: Partial<Record<StepSource, StepSourceReading>>;
-  chosenSource: StepSource | null;
-  chosenSteps: number;
-  isFinal: boolean;
-  computedAt: admin.firestore.Timestamp | string;
-  updatedAt: admin.firestore.Timestamp | string;
-};
-
-type RouteDoc = {
-  slug: string;
-  name: string;
-  version: number;
-  isPublished: boolean;
-  isComingSoon: boolean;
-  totalMeters: number;
-  totalStepsCanonical: number;
-  totalAltitudeGainMeters: number;
-  estimatedDays: number;
-  difficulty: 'easy' | 'moderate' | 'challenging' | 'extreme';
-  regionTag: string;
-  tags: string[];
-  priceUSD: number;
-  isFreeRoute: boolean;
-  shortDescription: string;
-  longDescription: string;
-  heroImageKey: string;
-  heroVideoKey?: string;
-  freeContentDeliveryMode: 'bundled';
-  premiumContentDeliveryMode: 'download_pack';
-  premiumContentPackId?: string | null;
-  paywallMilestoneId?: string | null;
-  paywallTriggerMeters?: number | null;
-  polylineRef: string;
-  bounds: { north: number; south: number; east: number; west: number };
-  milestoneIds: string[];
-};
-
-type ContentPackDoc = {
-  routeId: string;
-  routeVersion: number;
-  deliveryMode: 'download_pack';
-  version: number;
-  downloadUrl: string;
-  checksumSha256: string;
-  compressedSizeBytes: number;
-  uncompressedSizeBytes: number;
-  wifiRecommended: boolean;
-  retainAfterDownload: true;
-  assets: Array<{
-    assetBundleId: string;
-    relativePath: string;
-    contentType: 'image' | 'video' | 'audio' | 'json';
-    checksumSha256: string;
-    sizeBytes: number;
-  }>;
-};
-
-type MilestoneDoc = {
-  routeId: string;
-  routeVersion: number;
-  index: number;
-  nepaliTitle: string;
-  englishTitle: string;
-  titleSlug: string;
-  triggerMeters: number;
-  triggerSteps: number;
-  tier: 'free' | 'premium';
-  assetBundleId: string;
-  unlockOnce: true;
-  badgeId?: string | null;
-  ceremonyType: CeremonyType;
-};
-
-type JourneyDoc = {
-  userId: string;
-  routeId: string;
-  routeVersion: number;
-  status: 'active' | 'completed' | 'abandoned';
-  startedAt: admin.firestore.Timestamp | string;
-  completedAt?: admin.firestore.Timestamp | string | null;
-  totalStepsApplied: number;
-  progressMeters: number;
-  progressPercent: number;
-  currentMilestoneIndex: number;
-  unlockedMilestoneIds: string[];
-  purchaseState: 'free' | 'premium_unlocked';
-  accessTier: 'local_free' | 'standard_free' | 'paid';
-  frozenAtPaywall: boolean;
-  freezeReason: FreezeReason;
-  paywallArrivalDate?: string | null;
-  acclimatizationDays: number;
-  streakDays: number;
-  longestStreakDays: number;
-  lastStepDate?: string | null;
-  completionShareUnlocked: boolean;
-  ratingPromptEligible: boolean;
-  updatedAt: admin.firestore.Timestamp | string;
-};
-
-type JourneyLedgerDoc = {
-  userId: string;
-  journeyId: string;
-  localDate: string;
-  snapshotRef: string;
-  appliedSource: StepSource;
-  appliedSteps: number;
-  appliedMeters: number;
-  wasFrozen: boolean;
-  freezeReason: FreezeReason;
-  appliedAt: admin.firestore.Timestamp | string;
-  recomputeVersion: number;
-};
-
-type UsageCounterDoc = {
-  localDate: string;
-  userId: string;
-  stepSyncCount: number;
-  weatherCallCount: number;
-  lastStepSyncAt?: admin.firestore.Timestamp | string | null;
-  lastWeatherFetchAt?: admin.firestore.Timestamp | string | null;
-  updatedAt: admin.firestore.Timestamp | string;
-};
-
-type WeatherCacheDoc = {
-  cacheKey: string;
-  locationKey: string;
-  provider: 'openweathermap';
-  payload: Record<string, unknown>;
-  fetchedAt: admin.firestore.Timestamp | string;
-  expiresAt: admin.firestore.Timestamp | string;
-};
+const now = () => new Date();
 
 const SOURCE_PRIORITY: StepSource[] = [
   'healthkit',
   'health_connect',
   'phone_pedometer',
-  'manual',
 ];
-const MAX_STEP_SYNCS_PER_DAY = 10;
 const MAX_WEATHER_CALLS_PER_DAY = 4;
 const WEATHER_TTL_MS = 6 * 60 * 60 * 1000;
 
@@ -210,9 +71,7 @@ async function getContentPack(
   return snap.exists ? (snap.data() as ContentPackDoc) : null;
 }
 
-function timestampToMillis(
-  value: admin.firestore.Timestamp | string | null | undefined,
-): number | null {
+function timestampToMillis(value: unknown): number | null {
   if (!value) {
     return null;
   }
@@ -221,15 +80,21 @@ function timestampToMillis(
     return value.toMillis();
   }
 
-  const parsed = Date.parse(value);
-  return Number.isNaN(parsed) ? null : parsed;
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+
+  return null;
 }
 
-async function incrementUsageCounter(
+async function incrementWeatherUsageCounter(
   userId: string,
   localDate: string,
-  field: 'stepSyncCount' | 'weatherCallCount',
-  lastAtField: 'lastStepSyncAt' | 'lastWeatherFetchAt',
 ): Promise<UsageCounterDoc> {
   const counterRef = db
     .collection('users')
@@ -242,23 +107,18 @@ async function incrementUsageCounter(
     const current = (snap.exists ? (snap.data() as UsageCounterDoc) : null) ?? {
       localDate,
       userId,
-      stepSyncCount: 0,
       weatherCallCount: 0,
       updatedAt: now(),
     };
 
-    tx.set(
-      counterRef,
-      {
-        ...current,
-        localDate,
-        userId,
-        [field]: (current[field] ?? 0) + 1,
-        [lastAtField]: now(),
-        updatedAt: now(),
-      },
-      { merge: true },
-    );
+    tx.set(counterRef, {
+      ...current,
+      localDate,
+      userId,
+      weatherCallCount: (current.weatherCallCount ?? 0) + 1,
+      lastWeatherFetchAt: now(),
+      updatedAt: now(),
+    }, { merge: true });
   });
 
   return (await counterRef.get()).data() as UsageCounterDoc;
@@ -405,13 +265,6 @@ export const stepSnapshotUpdated = onDocumentWritten(
 
     const userId = event.params.userId;
     const localDate = event.params.localDate;
-    const usage = await getUsageCounter(userId, localDate);
-    if ((usage?.stepSyncCount ?? 0) >= MAX_STEP_SYNCS_PER_DAY) {
-      logger.info('Skipping step sync due to daily limit', { userId, localDate });
-      return;
-    }
-
-    await incrementUsageCounter(userId, localDate, 'stepSyncCount', 'lastStepSyncAt');
     const chosen = chooseSource(snapshot);
 
     await after.ref.set(
@@ -440,22 +293,7 @@ export const stepSnapshotUpdated = onDocumentWritten(
     const ledgerRef = activeJourney.ref.collection('ledger').doc(localDate);
 
     if (!chosen.source) {
-      await ledgerRef.set(
-        {
-          userId,
-          journeyId: activeJourney.ref.id,
-          localDate,
-          snapshotRef: after.ref.path,
-          appliedSource: 'manual',
-          appliedSteps: 0,
-          appliedMeters: 0,
-          wasFrozen: false,
-          freezeReason: null,
-          appliedAt: now(),
-          recomputeVersion: 1,
-        } satisfies JourneyLedgerDoc,
-        { merge: true },
-      );
+      logger.info('No valid step source found', { userId, localDate });
       return;
     }
 
@@ -475,6 +313,9 @@ export const stepSnapshotUpdated = onDocumentWritten(
           appliedMeters: 0,
           wasFrozen: true,
           freezeReason: 'paywall',
+          checkpointsReachedToday: [],
+          restDecision: null,
+          discardedSurplusSteps: 0,
           appliedAt: now(),
           recomputeVersion: 1,
         } satisfies JourneyLedgerDoc,
@@ -509,6 +350,9 @@ export const stepSnapshotUpdated = onDocumentWritten(
         appliedMeters: chosen.steps * metersPerStep,
         wasFrozen: false,
         freezeReason: null,
+        checkpointsReachedToday: [],
+        restDecision: null,
+        discardedSurplusSteps: 0,
         appliedAt: now(),
         recomputeVersion: 1,
       } satisfies JourneyLedgerDoc,
@@ -673,7 +517,7 @@ export const weatherProxy = onRequest(async (req, res) => {
     return;
   }
 
-  await incrementUsageCounter(userId, localDate, 'weatherCallCount', 'lastWeatherFetchAt');
+  await incrementWeatherUsageCounter(userId, localDate);
 
   // Placeholder for the external OpenWeatherMap call.
   // The real implementation should fetch once, store the normalized payload,
@@ -691,7 +535,7 @@ export const weatherProxy = onRequest(async (req, res) => {
       provider: 'openweathermap',
       payload: normalizedPayload,
       fetchedAt: now(),
-      expiresAt: admin.firestore.Timestamp.fromMillis(Date.now() + WEATHER_TTL_MS),
+      expiresAt: new Date(Date.now() + WEATHER_TTL_MS),
     } satisfies WeatherCacheDoc,
     { merge: true },
   );

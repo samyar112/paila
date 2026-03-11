@@ -4,18 +4,37 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { getAppEnvironment } from './src/shared/config/app-env';
+import { initializeFirebase, runStartupFirestoreRead } from './src/shared/firebase/firebase';
 import { verifyAppStorage } from './src/shared/storage/app-storage';
 import { placeholderTheme } from './src/shared/theme/placeholder-theme';
 
 export default function App() {
   const [isStorageReady, setIsStorageReady] = useState<boolean | null>(null);
+  const [isFirebaseReady, setIsFirebaseReady] = useState<boolean | null>(null);
+  const [firestoreCheck, setFirestoreCheck] = useState<
+    'pending' | 'ok' | 'error' | 'skipped'
+  >('pending');
   const appEnv = getAppEnvironment();
 
   useEffect(() => {
     setIsStorageReady(verifyAppStorage());
+    const firebaseOk = initializeFirebase();
+    setIsFirebaseReady(firebaseOk);
+    if (!firebaseOk) {
+      setFirestoreCheck('error');
+      return;
+    }
+
+    if (appEnv !== 'production') {
+      void runStartupFirestoreRead().then((ok) => {
+        setFirestoreCheck(ok ? 'ok' : 'error');
+      });
+    } else {
+      setFirestoreCheck('skipped');
+    }
   }, []);
 
-  if (isStorageReady !== true) {
+  if (isStorageReady !== true || isFirebaseReady !== true) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator color={placeholderTheme.primary} size="large" />
@@ -23,7 +42,9 @@ export default function App() {
         <Text style={styles.loadingSubtitle}>
           {isStorageReady === false
             ? 'Local storage bootstrap failed.'
-            : 'Preparing scaffold foundation.'}
+            : isFirebaseReady === false
+              ? 'Firebase bootstrap failed.'
+              : 'Preparing scaffold foundation.'}
         </Text>
         <Text style={styles.environmentBadge}>
           {appEnv === 'production' ? 'Production build' : 'Development build'}
@@ -35,7 +56,7 @@ export default function App() {
 
   return (
     <>
-      <RootNavigator />
+      <RootNavigator firestoreCheck={firestoreCheck} />
       <StatusBar style="dark" />
     </>
   );

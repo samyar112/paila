@@ -3,9 +3,31 @@ import { StyleSheet, Text, View } from 'react-native';
 import { getAppEnvironment, getFirebaseProjectId } from '../shared/config/app-env';
 import { placeholderTheme } from '../shared/theme/placeholder-theme';
 
-export function ScaffoldShellScreen() {
+export function ScaffoldShellScreen({
+  firestoreCheck,
+}: {
+  firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped';
+}) {
   const appEnv = getAppEnvironment();
   const firebaseProjectId = getFirebaseProjectId();
+  const firestoreLabel = (() => {
+    switch (firestoreCheck) {
+      case 'ok':
+        return 'Firestore: OK';
+      case 'error':
+        return 'Firestore: ERROR';
+      case 'skipped':
+        return 'Firestore: SKIPPED';
+      default:
+        return 'Firestore: CHECKING';
+    }
+  })();
+  const firestoreStyle =
+    firestoreCheck === 'error'
+      ? styles.firebaseError
+      : firestoreCheck === 'ok'
+        ? styles.firebaseOk
+        : styles.firebasePending;
 
   return (
     <View style={styles.screen}>
@@ -18,6 +40,7 @@ export function ScaffoldShellScreen() {
         {appEnv === 'production' ? 'Production' : 'Development'} ·{' '}
         {firebaseProjectId}
       </Text>
+      <Text style={[styles.firebaseStatus, firestoreStyle]}>{firestoreLabel}</Text>
     </View>
   );
 }
@@ -51,5 +74,20 @@ const styles = StyleSheet.create({
     color: placeholderTheme.primary,
     textTransform: 'uppercase',
   },
+  firebaseStatus: {
+    marginTop: 8,
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: 0.2,
+    textTransform: 'uppercase',
+  },
+  firebaseOk: {
+    color: '#1f7a4f',
+  },
+  firebaseError: {
+    color: '#b42318',
+  },
+  firebasePending: {
+    color: placeholderTheme.mutedText,
+  },
 });
-

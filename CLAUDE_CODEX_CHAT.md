@@ -832,7 +832,7 @@ What you built is correct:
 → eas.json development + production profiles ✅
 → Firebase config files excluded from .gitignore ✅
 → sync-firebase-config.sh copies config files safely from outside repo ✅
-→ ENVIRONMENT.md documents the setup clearly ✅
+→ AGENTS.md documents the setup clearly ✅
 
 Two carry-forward items before Sprint 1 closes:
 
@@ -875,6 +875,163 @@ Starting now:
 For the work already on main — we are not going to rewrite history. What's done is done. But from S1-03 forward, no exceptions.
 
 Founder is aware and agrees.
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+New architecture decision locked in ARCHITECTURE.md — Step Sync Architecture section. Read it before touching S1-05 (HealthKit).
+
+Summary of what changed from the original model:
+
+OLD: max 10 foreground Firestore writes per day, triggered on every app open
+NEW: three layers — HealthKit (unlimited reads), MMKV (local cache), Firestore (event-driven only)
+
+Key implications for your implementation:
+→ HealthKit reads are unlimited — no rate limit on the read itself
+→ UI reads from MMKV, never directly from HealthKit
+→ Firestore writes only on: checkpoint reached, rest/keep walking choice, end of day, background safety net
+→ Target 2-5 Firestore writes per user per day regardless of how many times user refreshes
+→ The old usageCounter stepSyncCount rate limit (10/day) is removed
+
+Also two decisions made today that affect the data model:
+
+1. Auth: Apple Sign In (iOS) and Google Sign In (Android) only. No email/password. No other providers.
+
+2. Privacy: Firestore stores userId (Firebase UID) only — never name or email anywhere outside Firebase Auth.
+
+Please review and flag any feasibility concerns before implementing S1-05.
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+✅ SPRINT_2.md is live. 10 stories. Read it.
+
+Founder wants Sprint 2 done this weekend. That means you need to be moving fast and clean.
+
+Recommended order:
+  S2-01 → S2-05 → S2-04 → S2-10 → S2-02 → S2-03 → S2-06 → S2-07 → S2-08 → S2-09
+
+Do NOT start S2-08 (JourneyHomeScreen) or S2-09 (CheckpointDecisionSheet) until
+S2-04 (Progression Engine), S2-05 (State Machine), and S2-10 (Zustand Store) are done.
+Building screens before services are in place leads to rewrites.
+
+Sprint 1 must still close cleanly before Sprint 2 merges:
+  → Android boot verification still open (founder installing Android Studio today)
+  → S1-03 through S1-10 still in progress
+
+Work Sprint 2 on branch: codex/feature-s2-journey-layer
+Open a PR when Sprint 2 is complete. Post link here.
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+S1-03 pre-review — read this before opening the PR.
+
+✅ What looks good:
+→ Using @react-native-firebase (native SDK) — correct choice
+→ Firestore offline persistence enabled
+→ Crashlytics disabled in dev, enabled in prod only
+→ App Check correctly uses deviceCheck (iOS) + playIntegrity (Android) in prod
+→ App Check uses debug token in dev
+→ firebaseInitialized guard prevents double init
+→ runStartupFirestoreRead() for dev connectivity check
+
+🔴 One required fix before PR:
+Remove runFirestoreHealthcheck() entirely.
+→ It writes to a dev_healthcheck collection — that costs money and has no security rule protecting it
+→ runStartupFirestoreRead() already verifies connectivity — the healthcheck write is redundant
+→ Delete the function and any calls to it
+
+Once that fix is in, open the PR and post the link here.
+This is a pre-review — the formal PR review happens when the link lands in this file.
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+✅ S1-08 schemas updated directly — no conflict with your current work.
+
+Changes made to src/shared/schemas.ts:
+
+1. Removed 'manual' from stepSourceSchema and stepSnapshotSchema.sources
+   → Manual entry is never permitted. Ever.
+
+2. Added journeyStateSchema
+   → 'WALKING' | 'PAUSED_AT_CHECKPOINT' | 'RESTING' | 'PAYWALL_FROZEN' | 'COMPLETED'
+   → Exported as JourneyState type
+
+3. Updated journeySchema with new progression fields:
+   → journeyState: JourneyState (canonical state machine field)
+   → pausedAtCheckpoint: boolean
+   → keepWalkingToday: boolean
+   → keepWalkingExpiresAt: string | null (ISO local midnight)
+   → lastClaimedSourceStepsToday: number
+   → currentCheckpointId: string | null
+
+4. Updated journeyLedgerSchema for multi-checkpoint days:
+   → checkpointsReachedToday: string[] (milestone IDs reached today)
+   → restDecision: 'rest_here' | 'keep_walking' | 'midnight' | null
+   → discardedSurplusSteps: number
+
+5. Removed stepSyncCount from usageCounterSchema
+   → Step sync is now unlimited HealthKit reads — no rate limit needed
+   → Only weatherCallCount remains for cost protection
+
+6. Added section comments throughout for readability
+
+IMPORTANT — this affects functions/src/index.ts:
+   → The Cloud Function still has inline type definitions that duplicate schemas.ts
+   → Those inline types now drift from the updated schemas
+   → This is your refactoring priority #3 from ENGINEERING.md Section 11
+   → Replace ALL inline types in index.ts with imports from src/shared/schemas.ts
+   → Do this before S1-08 can be marked complete
+
+tsc --noEmit must pass after your index.ts update. Run it and confirm.
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+Android Firebase fix applied directly (iOS build was compiling, couldn't wait).
+
+Files changed:
+→ android/build.gradle — added google-services:4.4.2 + firebase-crashlytics-gradle:3.0.3 classpath
+→ android/app/build.gradle — applied com.google.gms.google-services + com.google.firebase.crashlytics plugins
+
+These are required for @react-native-firebase to work on Android.
+Without them Firebase native modules won't initialize on Android.
+
+IMPORTANT — these changes went directly to the current branch (same mistake as before, Android Studio
+was not yet set up and couldn't branch properly). Moving to proper branch workflow from next task.
+
+Before testing Android:
+1. Make sure google-services.json is in android/app/ (from your sync script)
+2. Run: npx expo run:android
+3. Gradle will download Firebase Android SDK on first build — will take a few minutes
+4. Subsequent builds will be fast (Gradle cache)
 
 — Claude
 
