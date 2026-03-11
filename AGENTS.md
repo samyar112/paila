@@ -211,6 +211,67 @@ Founder:  Reads and routes messages between agents
 
 ---
 
+## Environment & Secrets (Build-Time)
+
+```
+Firebase projects:
+  dev  -> paila-dev
+  prod -> paila-prod
+
+Bundle/package IDs:
+  dev  -> com.tpservices.paila.dev
+  prod -> com.tpservices.paila
+
+APP_ENV:
+  development -> dev bundle id + paila-dev
+  production  -> prod bundle id + paila-prod
+
+Non-negotiable:
+  Firebase config files live outside the repo and must never be committed.
+```
+
+Local Firebase config sync (before `expo run:ios` / `expo run:android`):
+
+```bash
+APP_ENV=development \
+FIREBASE_IOS_CONFIG_PATH="/absolute/path/to/dev/GoogleService-Info.plist" \
+FIREBASE_ANDROID_CONFIG_PATH="/absolute/path/to/dev/google-services.json" \
+bash ./scripts/sync-firebase-config.sh
+```
+
+Production:
+
+```bash
+APP_ENV=production \
+FIREBASE_IOS_CONFIG_PATH="/absolute/path/to/prod/GoogleService-Info.plist" \
+FIREBASE_ANDROID_CONFIG_PATH="/absolute/path/to/prod/google-services.json" \
+bash ./scripts/sync-firebase-config.sh
+```
+
+EAS profiles live in `eas.json`:
+- `development` -> `APP_ENV=development`
+- `preview`     -> `APP_ENV=production` (internal / staging-style)
+- `production`  -> `APP_ENV=production`
+
+---
+
+## Progression Model Snapshot (Non-Negotiable)
+
+This is the intentional walking contract. Full details live in `ARCHITECTURE.md`.
+
+```
+Steps:
+  - claimed in the foreground only (on app open)
+Checkpoints:
+  - arrival pauses immediately
+  - no passive continuation without user re-engagement
+User choice:
+  - Rest here
+  - Keep walking today
+Midnight:
+  - closes the day; unclaimed same-day steps after midnight are lost
+```
+
 ## Immersive-First Filter
 
 Before implementing ANY feature, ask:
@@ -401,9 +462,10 @@ paila/
 ## Environments
 
 ```
-dev     → Firebase dev project, EAS dev profile
-staging → Firebase staging project, EAS preview profile
-prod    → Firebase prod project, EAS production profile
+dev  → Firebase paila-dev project, EAS development profile
+prod → Firebase paila-prod project, EAS production profile
+
+Two environments only. No staging. No preview.
 
 Secrets: EAS Secrets + GitHub Actions
          NEVER committed to repo
@@ -416,9 +478,10 @@ Secrets: EAS Secrets + GitHub Actions
 
 ```
 Branch naming:
-  feature/short-description
-  fix/short-description
-  chore/short-description
+  Codex:  codex/feature-s1-03-firebase
+          codex/fix-journey-midnight-expiry
+  Claude: claude/feature-s1-08-schemas
+          claude/fix-progression-fields
 
 Commit style:
   feat: add milestone ceremony screen
@@ -426,10 +489,12 @@ Commit style:
   chore: update AGENTS.md
 
 PR rules:
+  → ALL work happens on a branch — Codex AND Claude
+  → No direct commits to main — ever, by anyone
   → All PRs reviewed by Claude before merge
-  → No direct commits to main
   → CI must pass before merge
   → Compliance check in PR description
+  → Founder merges after Claude approval
 ```
 
 ---

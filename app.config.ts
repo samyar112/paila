@@ -14,6 +14,7 @@ const config: ExpoConfig = {
   name: 'Paila',
   slug: 'paila',
   version: '1.0.0',
+  scheme: isProduction ? 'paila' : 'paila-dev',
   jsEngine: 'hermes',
   newArchEnabled: true,
   orientation: 'portrait',
@@ -27,6 +28,9 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
   },
   android: {
     package: bundleIdentifier,
@@ -44,6 +48,9 @@ const config: ExpoConfig = {
   extra: {
     appEnv,
     firebaseProjectId,
+    eas: {
+      projectId: '51f03376-73aa-4f61-997e-63ba6c2363b2',
+    },
   },
 };
 

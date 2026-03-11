@@ -103,6 +103,87 @@ If a route requires code changes, the architecture has failed.
   premium asset -> local filesystem path from downloaded content pack
   remote URLs should never be used for owned premium content after download succeeds.
 
+## Step Sync Architecture (Locked — March 2026)
+
+This decision was made before S1-05 (HealthKit) was implemented. Codex must follow this model exactly.
+
+### The Three Layers
+
+```
+Layer 1 — HealthKit (free, local, unlimited)
+  → Read step count directly from HealthKit / Health Connect
+  → No cost, no network, instant
+  → User can refresh as many times as they want
+  → Always returns the full daily total for today
+
+Layer 2 — MMKV (local cache, persistent)
+  → Every HealthKit read writes today's step count to MMKV
+  → UI always reads from MMKV — never directly from HealthKit
+  → Keyed by date: steps:2026-03-11 → { count, lastReadAt }
+  → Entries older than today cleared on app open
+  → Zero cost, zero network, instant UI updates
+
+Layer 3 — Firestore (permanent record, event-driven only)
+  → Written ONLY on meaningful journey events:
+      - Checkpoint reached
+      - User chooses Rest here or Keep walking today
+      - End of day (midnight boundary)
+      - App backgrounds after significant step gain (safety net)
+  → Target: 2-5 Firestore writes per user per day
+  → Never written on every app open or every refresh
+```
+
+### Rules
+
+```
+✅ HealthKit reads    → unlimited, always fresh, no rate limit
+✅ MMKV writes        → on every HealthKit read, keyed by date
+✅ MMKV reads         → UI reads from here, not HealthKit directly
+✅ Firestore writes   → only on journey events listed above
+✅ All writes         → foreground only, never background
+
+❌ Never write to Firestore on every app open
+❌ Never write to Firestore on every pull-to-refresh
+❌ Never read HealthKit directly from UI components
+❌ Never store steps in Firestore more than once per meaningful event
+```
+
+### Why
+
+Users should be able to pull-to-refresh and see live step updates as often as they want.
+HealthKit and MMKV make this free and instant.
+Firestore is only touched when the journey actually changes state.
+This keeps infrastructure costs predictable at scale.
+
+### Data Loss on App Delete
+
+```
+MMKV cleared    → expected, only today's cache
+Firestore data  → deleted when user deletes account (Delete Account button)
+Firebase Auth   → cleared on account deletion
+
+If user deletes app without deleting account:
+  → Firestore data persists until account deletion is triggered
+  → On reinstall + sign in → journey restored from Firestore
+
+Delete Account flow (mandatory before launch):
+  → Wipe all Firestore user data
+  → Delete Firebase Auth account
+  → Clear MMKV
+  → Confirm to user
+```
+
+### Privacy
+
+```
+→ Firestore stores userId (Firebase UID) only — never name or email
+→ Name and email stay in Firebase Auth only
+→ No PII in Firestore, Crashlytics, Analytics, or logs
+→ UID is a random string — meaningless without Firebase Auth
+```
+
+---
+
 ## Future-Proofing
 
 The following are intentionally route-driven today so later routes do not require refactors:

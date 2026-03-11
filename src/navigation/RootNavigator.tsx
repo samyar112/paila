@@ -6,7 +6,7 @@ import { ScaffoldShellScreen } from '../screens/ScaffoldShellScreen';
 import { placeholderTheme } from '../shared/theme/placeholder-theme';
 
 type RootStackParamList = {
-  ScaffoldShell: undefined;
+  ScaffoldShell: { firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped' };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -41,7 +41,11 @@ const navigationTheme: Theme = {
   },
 };
 
-export function RootNavigator() {
+export function RootNavigator({
+  firestoreCheck,
+}: {
+  firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped';
+}) {
   return (
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
@@ -51,7 +55,9 @@ export function RootNavigator() {
           animation: 'fade',
         }}
       >
-        <Stack.Screen component={ScaffoldShellScreen} name="ScaffoldShell" />
+        <Stack.Screen name="ScaffoldShell">
+          {() => <ScaffoldShellScreen firestoreCheck={firestoreCheck} />}
+        </Stack.Screen>
       </Stack.Navigator>
     </NavigationContainer>
   );
