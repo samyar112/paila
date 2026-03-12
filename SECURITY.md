@@ -45,7 +45,12 @@ If you encounter ANY of the following — stop all work immediately and post to 
 ❌ NEVER store secrets in .env files committed to git
 ❌ NEVER log secrets, tokens, or keys anywhere
 
-✅ Firebase config files → stored outside repo (founder's Documents folder)
+✅ Firebase config files → stored inside repo under ios/Paila/dev/ and ios/Paila/prod/
+     (gitignored — never committed; in-repo location required because xcodebuild
+      cannot read from paths outside the project directory during build phases)
+     OVERRIDE: original rule required storage outside repo, but Xcode build
+     constraints make that unworkable. Mitigation: both folders are in .gitignore,
+     verified by CI secret scan, and files are never committed.
 ✅ All secrets → EAS Secrets for build-time injection
 ✅ All backend secrets → Firebase environment config or Secret Manager
 ✅ Service account JSON keys should not be created unless absolutely necessary

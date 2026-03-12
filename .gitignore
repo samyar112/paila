@@ -54,3 +54,7 @@ firebase/prod/GoogleService-Info.plist
 # Belt-and-suspenders: synced destinations (even if /ios and /android are ignored)
 ios/Paila/GoogleService-Info.plist
 android/app/google-services.json
+
+# Firebase config source files inside repo (gitignored — never commit these)
+ios/Paila/dev/
+ios/Paila/prod/

@@ -29,6 +29,9 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier,
+    googleServicesFile: isProduction
+      ? './ios/Paila/prod/GoogleService-Info.plist'
+      : './ios/Paila/dev/GoogleService-Info.plist',
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSFaceIDUsageDescription: 'Use Face ID to securely authenticate your Paila account.',
