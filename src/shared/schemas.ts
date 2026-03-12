@@ -80,7 +80,7 @@ export const stepSourceReadingSchema = z.object({
 export const stepSnapshotSchema = z.object({
   userId: z.string().min(1),
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  timezone: z.string().min(1),
+  timezone: z.string().min(1).nullable(),
   sources: z.object({
     healthkit: stepSourceReadingSchema.optional(),
     health_connect: stepSourceReadingSchema.optional(),
@@ -107,7 +107,7 @@ export const userSchema = z.object({
   photoURL: z.string().url().optional(),
   homeDistrict: z.string().min(1).optional(),
   homeCity: z.string().min(1).optional(),
-  timezone: z.string().min(1),
+  timezone: z.string().min(1).nullable(),
   locale: z.string().min(1).optional(),
   countryCode: z.string().length(2).optional(),
   accessTier: accessTierSchema,

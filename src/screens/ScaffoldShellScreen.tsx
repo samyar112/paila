@@ -1,5 +1,6 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { signOut } from '../services/auth/AuthService';
 import { getAppEnvironment, getFirebaseProjectId } from '../shared/config/app-env';
 import { placeholderTheme } from '../shared/theme/placeholder-theme';
 
@@ -41,6 +42,13 @@ export function ScaffoldShellScreen({
         {firebaseProjectId}
       </Text>
       <Text style={[styles.firebaseStatus, firestoreStyle]}>{firestoreLabel}</Text>
+      <Pressable
+        accessibilityRole="button"
+        style={styles.signOutButton}
+        onPress={() => void signOut()}
+      >
+        <Text style={styles.signOutText}>Sign Out</Text>
+      </Pressable>
     </View>
   );
 }
@@ -89,5 +97,18 @@ const styles = StyleSheet.create({
   },
   firebasePending: {
     color: placeholderTheme.mutedText,
+  },
+  signOutButton: {
+    marginTop: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: placeholderTheme.border,
+  },
+  signOutText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: placeholderTheme.text,
   },
 });

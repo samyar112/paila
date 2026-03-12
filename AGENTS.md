@@ -250,7 +250,6 @@ bash ./scripts/sync-firebase-config.sh
 
 EAS profiles live in `eas.json`:
 - `development` -> `APP_ENV=development`
-- `preview`     -> `APP_ENV=production` (internal / staging-style)
 - `production`  -> `APP_ENV=production`
 
 ---

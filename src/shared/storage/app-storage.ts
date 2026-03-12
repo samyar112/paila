@@ -16,3 +16,7 @@ export function verifyAppStorage(): boolean {
     return false;
   }
 }
+
+export function clearAppStorage(): void {
+  appStorage.clearAll();
+}

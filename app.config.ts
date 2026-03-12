@@ -9,6 +9,7 @@ const bundleIdentifier = isProduction
   ? 'com.tpservices.paila'
   : 'com.tpservices.paila.dev';
 const firebaseProjectId = isProduction ? 'paila-prod' : 'paila-dev';
+const googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID ?? '';
 
 const config: ExpoConfig = {
   name: 'Paila',
@@ -30,6 +31,7 @@ const config: ExpoConfig = {
     bundleIdentifier,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      NSFaceIDUsageDescription: 'Use Face ID to securely authenticate your Paila account.',
     },
   },
   android: {
@@ -48,6 +50,7 @@ const config: ExpoConfig = {
   extra: {
     appEnv,
     firebaseProjectId,
+    googleWebClientId,
     eas: {
       projectId: '51f03376-73aa-4f61-997e-63ba6c2363b2',
     },

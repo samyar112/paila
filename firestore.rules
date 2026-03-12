@@ -24,12 +24,20 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId);
 
-      allow create: if isOwner(userId)
-        && request.resource.data.authUid == request.auth.uid;
+      // User docs are created by Cloud Functions only.
+      allow create: if false;
 
+      // Only allow user-owned profile updates from the client.
       allow update: if isOwner(userId)
-        && request.resource.data.authUid == resource.data.authUid
-        && request.resource.data.createdAt == resource.data.createdAt;
+        && unchanged('authUid')
+        && unchanged('email')
+        && unchanged('displayName')
+        && unchanged('photoURL')
+        && unchanged('accessTier')
+        && unchanged('isNepalLocalEligible')
+        && unchanged('activeJourneyId')
+        && unchanged('createdAt')
+        && unchanged('deletedAt');
 
       allow delete: if false;
 
@@ -46,21 +54,8 @@ service cloud.firestore {
       match /journeys/{journeyId} {
         allow read: if isOwner(userId);
 
-        // Client can only create a fresh journey shell. Progression is server-managed.
-        allow create: if isOwner(userId)
-          && request.resource.data.userId == userId
-          && isPublishedRoute(request.resource.data.routeId)
-          && request.resource.data.totalStepsApplied == 0
-          && request.resource.data.progressMeters == 0
-          && request.resource.data.progressPercent == 0
-          && request.resource.data.currentMilestoneIndex == 0
-          && request.resource.data.unlockedMilestoneIds.size() == 0
-          && request.resource.data.streakDays == 0
-          && request.resource.data.longestStreakDays == 0;
-
-        // Only allow user-owned note-like updates from the client.
-        // Progress, unlocks, purchase state, freeze state, and completion are admin-only.
-        allow update: if false;
+        // Journeys are server-managed only.
+        allow create, update: if false;
         allow delete: if false;
 
         match /ledger/{localDate} {
@@ -91,7 +86,7 @@ service cloud.firestore {
     }
 
     match /routes/{routeId} {
-      allow read: if resource.data.isPublished == true;
+      allow read: if isSignedIn() && resource.data.isPublished == true;
       allow write, delete: if false;
 
       match /milestones/{milestoneId} {
@@ -101,12 +96,13 @@ service cloud.firestore {
     }
 
     match /assetBundles/{assetBundleId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write, delete: if false;
     }
 
     match /contentPacks/{contentPackId} {
-      allow read: if routeDoc(resource.data.routeId).data.isPublished == true;
+      allow read: if isSignedIn()
+        && routeDoc(resource.data.routeId).data.isPublished == true;
       allow write, delete: if false;
     }
 
@@ -116,7 +112,7 @@ service cloud.firestore {
     }
 
     match /badges/{badgeId} {
-      allow read: if true;
+      allow read: if isSignedIn();
       allow write, delete: if false;
     }
   }

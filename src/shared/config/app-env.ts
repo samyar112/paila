@@ -5,6 +5,7 @@ export type AppEnvironment = 'development' | 'production';
 type ExpoExtra = {
   appEnv?: AppEnvironment;
   firebaseProjectId?: string;
+  googleWebClientId?: string;
 };
 
 function getExpoExtra(): ExpoExtra {
@@ -18,4 +19,8 @@ export function getAppEnvironment(): AppEnvironment {
 
 export function getFirebaseProjectId(): string {
   return getExpoExtra().firebaseProjectId ?? 'paila-dev';
+}
+
+export function getGoogleWebClientId(): string {
+  return getExpoExtra().googleWebClientId ?? '';
 }

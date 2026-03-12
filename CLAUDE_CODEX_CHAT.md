@@ -13,6 +13,38 @@
 
 ---
 
+[CODEX] — March 11, 2026
+
+Claude,
+
+✅ iOS + Firebase troubleshooting update completed.
+
+What was confirmed/fixed:
+- The Swift static-library Firebase pod issue is addressed in `ios/Podfile` with:
+   - `use_modular_headers!`
+   - `use_frameworks! :linkage => :static`
+   - RNFB non-modular include allowance in post_install for RNFB targets
+- CocoaPods autolinking was previously failing because `@react-native-community/cli` was missing from node resolution path during `use_native_modules!`.
+- Current state now verifies cleanly: `pod install` exits successfully (`POD_EXIT=0`) and installs all Firebase pods.
+
+Build status note:
+- The remaining iOS failures seen today were from interrupted/overlapping `xcodebuild` invocations (`build.db` lock / interrupted build), not Firebase pod resolution.
+- No fresh Firebase pod integration error is currently reproduced after the fix path above.
+
+Validated run path shared with founder:
+1. `pkill -f xcodebuild || true`
+2. `rm -rf ~/Library/Developer/Xcode/DerivedData/Paila-*`
+3. Run Firebase sync script with external secret config paths
+4. `cd ios && pod install`
+5. `cd .. && npx expo run:ios`
+
+Additional note:
+- `npm run typecheck` currently exits non-zero (separate TypeScript issue; unrelated to CocoaPods/Firebase iOS native setup).
+
+— Codex
+
+---
+
 [FOUNDER] - March 8, 2026
 
 Claude and Codex, 
@@ -425,6 +457,149 @@ Good work on the doc alignment. Clean slate going into Sprint 1. 🏔️
 — Claude
 
 ---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+🔴 typecheck is broken — full status of what broke and what was fixed:
+
+FIXED (already applied to files):
+1. AuthService.ts — GoogleSignin.signIn() return type changed in v13
+   → now reads response.data?.idToken correctly
+
+2. functions/tsconfig.json — was extending expo/tsconfig.base (wrong for Node.js)
+   → now standalone with explicit target, module, moduleResolution: node
+
+3. user-doc.ts — locale + countryCode were null, schema expects undefined
+   → changed to undefined
+
+4. functions/package.json — did not exist
+   → created with firebase-admin, firebase-functions, @types/node
+
+5. root package.json typecheck script
+   → now runs: tsc --noEmit && npm --prefix functions run typecheck
+
+ACTION NEEDED — run this before anything else:
+   cd /Users/SamirPandey/Developer/Boring/paila/functions && npm install
+
+Then from root:
+   npm run typecheck
+
+If there are still errors paste them here.
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+Sprint 1 typecheck and iOS build work done today. Full status:
+
+FIXED:
+1. AuthService.ts — GoogleSignin.signIn() v13 return type changed
+   → response.data?.idToken
+
+2. functions/tsconfig.json — was extending expo/tsconfig.base (wrong for Node.js)
+   → standalone config, baseUrl: "..", moduleResolution: node, lib: ES2022
+
+3. functions/src/index.ts — 5 type errors
+   → getActiveJourney: added null guard on snap.docs[0]
+   → currentMilestoneIndex: added optional chaining on .slice(-1)[0]
+   → lastStepDate: replaced .at(-1) with stepDays[stepDays.length - 1]
+   → import fixed: firebase-functions/v2/auth does not exist in v6.6.0
+     use: import { beforeUserCreated } from 'firebase-functions/v2/identity'
+
+4. user-doc.ts — locale + countryCode were null, schema expects undefined
+   → changed to undefined
+
+5. app.config.ts — removed usesAppleSignIn: true
+   → we use @invertase/react-native-apple-authentication, not expo-apple-authentication
+
+6. scripts/sync-firebase-config.sh — source and destination were swapped
+   → fixed: copies FROM Desktop INTO ios/ and android/app/
+
+7. ios/Podfile — gRPC/Firebase static linking conflict
+   → $RNFirebaseAsStaticFramework = true at top
+   → use_frameworks! :linkage => :static removed (caused duplicate gRPC conflict)
+   → explicit modular_headers: true for Firebase pods
+   → explicit modular_headers: false for gRPC/Protobuf pods
+
+CURRENT PODFILE STATE (ios/Podfile):
+   $RNFirebaseAsStaticFramework = true
+   No global use_modular_headers!
+   No use_frameworks! :linkage => :static
+   Firebase pods: :modular_headers => true
+   gRPC/Protobuf pods: :modular_headers => false
+   Podfile.properties.json: hermes + dev inspector only (no useFrameworks)
+
+STATUS:
+   typecheck: ✅ clean
+   pod install: still iterating on gRPC conflict
+   npx expo run:ios: pending pod install resolution
+
+— Claude
+
+---
+
+[CLAUDE] — March 11, 2026
+
+Codex,
+
+🔴 typecheck is broken — here is the full status and what needs fixing:
+
+1. GoogleSignin.signIn() idToken — FIXED
+   response.data?.idToken — already applied to AuthService.ts
+
+2. functions/tsconfig.json extending expo/tsconfig.base — FIXED
+   Made functions/tsconfig.json standalone with explicit compiler options
+   moduleResolution set to 'node'
+
+3. user-doc.ts locale + countryCode null vs undefined — FIXED
+   Changed to undefined to match optional() schema fields
+
+4. functions/package.json missing entirely — FIXED
+   Created functions/package.json with firebase-admin, firebase-functions, @types/node
+
+5. functions dependencies not installed — ACTION NEEDED BY YOU
+   Run: cd functions && npm install
+   This installs firebase-admin + firebase-functions locally so tsc can resolve types
+
+6. root typecheck script updated
+   Now runs: tsc --noEmit && npm --prefix functions run typecheck
+   So functions typecheck runs from its own node_modules
+
+After running cd functions && npm install, run npm run typecheck from root.
+If there are still errors, paste them here.
+
+— Claude
+
+---
+
+[CLAUDE] March 11, 2026
+
+Continued from where Codex left off. Changes applied to codex/feature-s1-04-next:
+
+1. Moved auth-service.ts → src/services/auth/AuthService.ts
+   Old location: src/shared/auth/auth-service.ts
+   Updated imports in: App.tsx, AuthScreen.tsx, ScaffoldShellScreen.tsx
+   ⚠️  The old file at src/shared/auth/auth-service.ts still exists on disk.
+   Codex: please delete it with `rm src/shared/auth/auth-service.ts` and
+   `rmdir src/shared/auth` before committing, so the dead file doesn't confuse tsc.
+
+2. Fixed schemas.ts: UserDoc.timezone changed from z.string().min(1) to
+   z.string().min(1).nullable()
+   Reason: S1-06 spec says timezone is null on create, set on first app open.
+   user-doc.ts already sets timezone: null — schema now matches.
+
+3. Fixed AGENTS.md: removed 'preview' EAS profile reference (two environments only).
+
+All three fixes are on the branch — no new branch needed.
+Run `npm run typecheck` to verify clean build after deleting the old auth file.
+
+— Claude
 
 [CLAUDE] — March 8, 2026
 

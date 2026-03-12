@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
+import { beforeUserCreated as onAuthUserCreated } from 'firebase-functions/v2/identity';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onRequest } from 'firebase-functions/v2/https';
 
@@ -14,6 +15,14 @@ import type {
   UsageCounterDoc,
   WeatherCacheDoc,
 } from '../../src/shared/schemas';
+import {
+  COLLECTIONS,
+  userDocPath,
+  journeyLedgerPath,
+  userStepSnapshotPath,
+  userUsageCounterPath,
+} from '../../src/shared/paths';
+import { buildUserDoc } from './user-doc';
 
 admin.initializeApp();
 
@@ -67,7 +76,10 @@ function stepSnapshotInputsChanged(
 async function getContentPack(
   contentPackId: string,
 ): Promise<ContentPackDoc | null> {
-  const snap = await db.collection('contentPacks').doc(contentPackId).get();
+  const snap = await db
+    .collection(COLLECTIONS.contentPacks)
+    .doc(contentPackId)
+    .get();
   return snap.exists ? (snap.data() as ContentPackDoc) : null;
 }
 
@@ -96,11 +108,7 @@ async function incrementWeatherUsageCounter(
   userId: string,
   localDate: string,
 ): Promise<UsageCounterDoc> {
-  const counterRef = db
-    .collection('users')
-    .doc(userId)
-    .collection('usageCounters')
-    .doc(localDate);
+  const counterRef = db.doc(userUsageCounterPath(userId, localDate));
 
   await db.runTransaction(async (tx) => {
     const snap = await tx.get(counterRef);
@@ -128,12 +136,7 @@ async function getUsageCounter(
   userId: string,
   localDate: string,
 ): Promise<UsageCounterDoc | null> {
-  const snap = await db
-    .collection('users')
-    .doc(userId)
-    .collection('usageCounters')
-    .doc(localDate)
-    .get();
+  const snap = await db.doc(userUsageCounterPath(userId, localDate)).get();
 
   return snap.exists ? (snap.data() as UsageCounterDoc) : null;
 }
@@ -142,9 +145,9 @@ async function getActiveJourney(
   userId: string,
 ): Promise<{ ref: FirebaseFirestore.DocumentReference; data: JourneyDoc } | null> {
   const snap = await db
-    .collection('users')
+    .collection(COLLECTIONS.users)
     .doc(userId)
-    .collection('journeys')
+    .collection(COLLECTIONS.journeys)
     .where('status', '==', 'active')
     .limit(1)
     .get();
@@ -154,14 +157,15 @@ async function getActiveJourney(
   }
 
   const doc = snap.docs[0];
+  if (!doc) return null;
   return { ref: doc.ref, data: doc.data() as JourneyDoc };
 }
 
 async function listRouteMilestones(routeId: string): Promise<MilestoneDoc[]> {
   const snap = await db
-    .collection('routes')
+    .collection(COLLECTIONS.routes)
     .doc(routeId)
-    .collection('milestones')
+    .collection(COLLECTIONS.milestones)
     .orderBy('index', 'asc')
     .get();
 
@@ -176,7 +180,10 @@ async function rebuildJourneyFromLedger(
   milestones: MilestoneDoc[],
   localDate: string,
 ): Promise<JourneyDoc> {
-  const ledgerSnap = await journeyRef.collection('ledger').orderBy('localDate', 'asc').get();
+  const ledgerSnap = await journeyRef
+    .collection(COLLECTIONS.ledger)
+    .orderBy('localDate', 'asc')
+    .get();
   const ledgers = ledgerSnap.docs.map((doc) => doc.data() as JourneyLedgerDoc);
   const appliedLedgers = ledgers.filter((entry) => !entry.wasFrozen);
 
@@ -195,7 +202,7 @@ async function rebuildJourneyFromLedger(
 
   const currentMilestoneIndex =
     milestones.filter((milestone) => milestone.triggerMeters <= progressMeters).length > 0
-      ? milestones.filter((milestone) => milestone.triggerMeters <= progressMeters).slice(-1)[0].index
+      ? (milestones.filter((milestone) => milestone.triggerMeters <= progressMeters).slice(-1)[0]?.index ?? 0)
       : 0;
 
   const stepDays = appliedLedgers
@@ -207,7 +214,7 @@ async function rebuildJourneyFromLedger(
   if (stepDays.length > 0) {
     streakDays = 1;
     for (let i = stepDays.length - 1; i > 0; i -= 1) {
-      if (diffCalendarDays(stepDays[i - 1], stepDays[i]) === 1) {
+      if (diffCalendarDays(stepDays[i - 1] ?? '', stepDays[i] ?? '') === 1) {
         streakDays += 1;
       } else {
         break;
@@ -216,7 +223,7 @@ async function rebuildJourneyFromLedger(
   }
 
   const longestStreakDays = Math.max(journey.longestStreakDays ?? 0, streakDays);
-  const lastStepDate = stepDays.at(-1) ?? null;
+  const lastStepDate = stepDays.length > 0 ? stepDays[stepDays.length - 1] ?? null : null;
 
   const completed = progressMeters >= route.totalMeters;
 
@@ -244,8 +251,21 @@ async function rebuildJourneyFromLedger(
   return updated;
 }
 
+export const onUserCreated = onAuthUserCreated(async (event) => {
+  const user = event.data;
+  if (!user) {
+    return;
+  }
+
+  const userRef = db.doc(userDocPath(user.uid));
+  await userRef.set(
+    buildUserDoc(user, now()),
+    { merge: true },
+  );
+});
+
 export const stepSnapshotUpdated = onDocumentWritten(
-  'users/{userId}/stepSnapshots/{localDate}',
+  `${COLLECTIONS.users}/{userId}/${COLLECTIONS.stepSnapshots}/{localDate}`,
   async (event) => {
     const before = event.data?.before;
     const after = event.data?.after;
@@ -282,7 +302,9 @@ export const stepSnapshotUpdated = onDocumentWritten(
       return;
     }
 
-    const routeRef = db.collection('routes').doc(activeJourney.data.routeId);
+    const routeRef = db
+      .collection(COLLECTIONS.routes)
+      .doc(activeJourney.data.routeId);
     const routeSnap = await routeRef.get();
     if (!routeSnap.exists) {
       throw new Error(`Missing route ${activeJourney.data.routeId}`);
@@ -290,7 +312,9 @@ export const stepSnapshotUpdated = onDocumentWritten(
 
     const route = routeSnap.data() as RouteDoc;
     const milestones = await listRouteMilestones(activeJourney.data.routeId);
-    const ledgerRef = activeJourney.ref.collection('ledger').doc(localDate);
+    const ledgerRef = db.doc(
+      journeyLedgerPath(userId, activeJourney.ref.id, localDate),
+    );
 
     if (!chosen.source) {
       logger.info('No valid step source found', { userId, localDate });
@@ -307,7 +331,7 @@ export const stepSnapshotUpdated = onDocumentWritten(
           userId,
           journeyId: activeJourney.ref.id,
           localDate,
-          snapshotRef: after.ref.path,
+          snapshotRef: userStepSnapshotPath(userId, localDate),
           appliedSource: chosen.source,
           appliedSteps: 0,
           appliedMeters: 0,
@@ -344,7 +368,7 @@ export const stepSnapshotUpdated = onDocumentWritten(
         userId,
         journeyId: activeJourney.ref.id,
         localDate,
-        snapshotRef: after.ref.path,
+        snapshotRef: userStepSnapshotPath(userId, localDate),
         appliedSource: chosen.source,
         appliedSteps: chosen.steps,
         appliedMeters: chosen.steps * metersPerStep,
@@ -417,9 +441,9 @@ export const revenueCatEntitlementSync = onRequest(async (req, res) => {
   const isActive = ['INITIAL_PURCHASE', 'RENEWAL', 'UNCANCELLATION'].includes(event?.type);
 
   const entitlementRef = db
-    .collection('users')
+    .collection(COLLECTIONS.users)
     .doc(appUserId)
-    .collection('entitlements')
+    .collection(COLLECTIONS.entitlements)
     .doc(entitlementId);
 
   await entitlementRef.set(
@@ -447,7 +471,10 @@ export const revenueCatEntitlementSync = onRequest(async (req, res) => {
   }
 
   if (isActive) {
-    const routeSnap = await db.collection('routes').doc(activeJourney.data.routeId).get();
+    const routeSnap = await db
+      .collection(COLLECTIONS.routes)
+      .doc(activeJourney.data.routeId)
+      .get();
     if (!routeSnap.exists) {
       throw new Error();
     }
@@ -502,7 +529,7 @@ export const weatherProxy = onRequest(async (req, res) => {
   }
 
   const cacheKey = cacheKeyForLocation(locationKey);
-  const cacheRef = db.collection('weatherCache').doc(cacheKey);
+  const cacheRef = db.collection(COLLECTIONS.weatherCache).doc(cacheKey);
   const cacheSnap = await cacheRef.get();
   const cache = cacheSnap.exists ? (cacheSnap.data() as WeatherCacheDoc) : null;
   const expiresAtMs = timestampToMillis(cache?.expiresAt);
