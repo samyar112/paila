@@ -9,6 +9,7 @@ import {
 import functions from '@react-native-firebase/functions';
 import { colors, radii } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
+import { APP_STRINGS } from '../../shared/content/strings';
 
 interface DeleteAccountScreenProps {
   onDeleteComplete: () => void;
@@ -46,7 +47,7 @@ export function DeleteAccountScreen({
       onDeleteComplete();
     } catch (err) {
       if (mountedRef.current) {
-        setError(err instanceof Error ? err.message : 'Failed to delete account');
+        setError(err instanceof Error ? err.message : APP_STRINGS.deleteAccount.deleteFailed);
         setIsDeleting(false);
       }
     }
@@ -54,24 +55,23 @@ export function DeleteAccountScreen({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Delete Account</Text>
+      <Text style={styles.title}>{APP_STRINGS.deleteAccount.title}</Text>
 
       <View style={styles.warningBox}>
         <Text style={styles.warningText}>
-          This will permanently delete your account, journey progress, and all data.
-          This cannot be undone.
+          {APP_STRINGS.deleteAccount.warning}
         </Text>
       </View>
 
       <Text style={styles.instruction}>
-        Type DELETE to confirm
+        {APP_STRINGS.deleteAccount.instruction}
       </Text>
 
       <TextInput
         style={styles.input}
         value={confirmText}
         onChangeText={setConfirmText}
-        placeholder="Type DELETE"
+        placeholder={APP_STRINGS.deleteAccount.placeholder}
         placeholderTextColor={colors.sage}
         autoCapitalize="characters"
         autoCorrect={false}
@@ -80,7 +80,7 @@ export function DeleteAccountScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       <PrimaryButton
-        label="Delete My Account"
+        label={APP_STRINGS.deleteAccount.delete}
         onPress={() => void handleDelete()}
         variant="danger"
         disabled={!canDelete}
@@ -93,7 +93,7 @@ export function DeleteAccountScreen({
         onPress={onCancel}
         activeOpacity={0.8}
       >
-        <Text style={styles.cancelText}>Cancel</Text>
+        <Text style={styles.cancelText}>{APP_STRINGS.deleteAccount.cancel}</Text>
       </TouchableOpacity>
     </View>
   );

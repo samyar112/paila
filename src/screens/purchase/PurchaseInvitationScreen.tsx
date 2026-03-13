@@ -11,13 +11,15 @@ import { useJourneyStore } from '../../stores/useJourneyStore';
 import { EntitlementService } from '../../services/entitlement/EntitlementService';
 import { colors, radii } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
-import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
+import { useRouteContent } from '../../shared/content/RouteContentContext';
+import { APP_STRINGS } from '../../shared/content/strings';
 
 interface PurchaseInvitationScreenProps {
   routeName: string;
   productId: string;
   priceLabel: string;
   onPurchaseComplete: () => void;
+  onReturnHome: () => void;
   onDismiss: () => void;
 }
 
@@ -26,8 +28,10 @@ export function PurchaseInvitationScreen({
   productId,
   priceLabel,
   onPurchaseComplete,
+  onReturnHome,
   onDismiss,
 }: PurchaseInvitationScreenProps): React.JSX.Element {
+  const routeContent = useRouteContent();
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -44,7 +48,7 @@ export function PurchaseInvitationScreen({
     if (result.ok) {
       onPurchaseComplete();
     } else {
-      setError(result.error ?? 'Purchase failed. Please try again.');
+      setError(result.error ?? APP_STRINGS.purchase.purchaseFailed);
     }
   };
 
@@ -57,7 +61,7 @@ export function PurchaseInvitationScreen({
     if (result.ok && result.entitlement?.status === 'active') {
       onPurchaseComplete();
     } else {
-      setError('No previous purchase found.');
+      setError(APP_STRINGS.purchase.noRestore);
     }
   };
 
@@ -68,27 +72,24 @@ export function PurchaseInvitationScreen({
     >
       {/* Hero section */}
       <View style={styles.heroArea}>
-        <Text style={styles.locationLabel}>NAMCHE BAZAAR</Text>
-        <Text style={styles.altitude}>3,440m</Text>
+        <Text style={styles.locationLabel}>{routeContent.paywall.location}</Text>
+        <Text style={styles.altitude}>{routeContent.paywall.altitude}</Text>
       </View>
 
-      {/* Pemba's words */}
+      {/* Guide's words */}
       <View style={styles.dialogueSection}>
         <Text style={styles.pembaQuote}>
-          "This is where most people decide if the mountain is for them.
-          Beyond Namche, the trail belongs to those who commit."
+          {routeContent.paywall.guideQuote}
         </Text>
-        <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
+        <Text style={styles.pembaName}>{routeContent.guide.attribution}</Text>
       </View>
 
       {/* What you unlock */}
       <View style={styles.unlockSection}>
-        <Text style={styles.unlockTitle}>Unlock the Full Trek</Text>
-        <Text style={styles.unlockItem}>13 more milestones to the summit</Text>
-        <Text style={styles.unlockItem}>Real expedition camp ceremonies</Text>
-        <Text style={styles.unlockItem}>Pemba's guidance through the Death Zone</Text>
-        <Text style={styles.unlockItem}>The summit of Everest at 8,849m</Text>
-        <Text style={styles.unlockItem}>Return journey to Kathmandu</Text>
+        <Text style={styles.unlockTitle}>{routeContent.paywall.unlockTitle}</Text>
+        {routeContent.paywall.unlockItems.map((item, index) => (
+          <Text key={index} style={styles.unlockItem}>{item}</Text>
+        ))}
       </View>
 
       {/* Error */}
@@ -96,7 +97,7 @@ export function PurchaseInvitationScreen({
 
       {/* Purchase button */}
       <PrimaryButton
-        label="Unlock Full Trek"
+        label={APP_STRINGS.purchase.unlock}
         subtitle={priceLabel}
         onPress={() => void handlePurchase()}
         variant="accent"
@@ -115,9 +116,19 @@ export function PurchaseInvitationScreen({
         {isRestoring ? (
           <ActivityIndicator color={colors.mutedText} />
         ) : (
-          <Text style={styles.restoreText}>Restore Purchase</Text>
+          <Text style={styles.restoreText}>{APP_STRINGS.purchase.restore}</Text>
         )}
       </TouchableOpacity>
+
+      {/* Return home — free path */}
+      <PrimaryButton
+        label={APP_STRINGS.purchase.returnHome}
+        subtitle={APP_STRINGS.purchase.returnHomeSub}
+        onPress={onReturnHome}
+        variant="outline"
+        disabled={isPurchasing || isRestoring}
+        style={styles.returnButton}
+      />
 
       {/* Not now */}
       <TouchableOpacity
@@ -125,7 +136,7 @@ export function PurchaseInvitationScreen({
         onPress={onDismiss}
         activeOpacity={0.8}
       >
-        <Text style={styles.dismissText}>Not now</Text>
+        <Text style={styles.dismissText}>{APP_STRINGS.purchase.notNow}</Text>
       </TouchableOpacity>
     </ScrollView>
   );
@@ -208,6 +219,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: colors.mutedText,
     textDecorationLine: 'underline',
+  },
+  returnButton: {
+    marginBottom: 12,
   },
   dismissButton: {
     padding: 12,

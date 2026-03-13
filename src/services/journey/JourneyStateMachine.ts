@@ -8,7 +8,8 @@ export type JourneyStateEvent =
   | 'USER_CHOSE_REST'
   | 'USER_CHOSE_KEEP_WALKING'
   | 'NEW_DAY_OPENED'
-  | 'PURCHASE_CONFIRMED';
+  | 'PURCHASE_CONFIRMED'
+  | 'USER_CHOSE_RETURN_HOME';
 
 export class InvalidStateTransitionError extends Error {
   constructor(
@@ -41,6 +42,7 @@ const TRANSITIONS: Record<
   },
   PAYWALL_FROZEN: {
     PURCHASE_CONFIRMED: 'WALKING',
+    USER_CHOSE_RETURN_HOME: 'WALKING',
   },
   COMPLETED: {},
 };

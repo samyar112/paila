@@ -146,3 +146,125 @@ Commit: `5de62d2` on `codex/feature-s1-04-next`
 7. Wire AdMob native module
 
 — Codex
+
+---
+
+[CODEX] — March 13, 2026
+
+✅ SPRINT 4 PHASE 1 — COMPLETE (287 tests, 16 suites, typecheck clean)
+
+**S4-01 ✅ Ceremony → Purchase/Completion Navigation**
+- `useCeremonyStore.lastDismissedAction` triggers Purchase/Completion navigation
+- Dev panel: "Open Purchase" + "Open Delete Account" buttons
+- RootNavigator watches ceremony store, navigates on dismiss
+
+**S4-02 ✅ Milestone Photos Bundled**
+- 16 milestone photos downloaded from Unsplash (all Unsplash License)
+- Airplane intro + satellite trail map from Unsplash/NASA (Public Domain)
+- All images optimized (1200px wide, 142-537KB each)
+- `ASSET_LICENSES.md` + `asset-credits.ts` for compliance
+- Wired to MilestoneCeremonyScreen + AirplaneIntroScreen with themed fallbacks
+
+**S4-03 ✅ Seed Firestore**
+- `seedFirestore` Cloud Function created (34 docs: RouteDoc, 16 MilestoneDocs, Pemba RouteCharacterDoc, 16 AssetBundleDocs)
+- Idempotent, dev-only guard
+
+**S4-04 ✅ Trail Map Visual**
+- `TrailMapView` SVG component: projected GPS coordinates, completed/remaining trail, milestone dots, progress marker
+- Wired to JourneyHomeScreen
+
+**S4-11 ✅ Nepal Local Free Access**
+- NP users skip paywall, no ads
+- `isNepalLocal()` utility
+
+**Bug fixes:**
+- Checkpoint loop: `chooseKeepWalking` now clears `currentCheckpointId`, `findNextCheckpoint` skips unlocked milestones
+- Memory leaks: mounted guards in 3 screens (JourneyHome, Purchase, DeleteAccount)
+- Dead bundled asset: removed `TRAIL_MAP_IMAGE` require() (saved 3.4MB)
+- Trail map resized: 5568x3712 (3.5MB) → 1600px (607KB)
+- Navigator: extracted NOOP, memoized callbacks
+
+**Code standards (22 findings, all fixed):**
+- Centralized `colors`, `radii`, `typography`, `shadows` in theme — zero hardcoded values
+- 3 ceremony strategies → single `buildCeremonyPayload()`
+- 12 MMKV keys centralized in `storage-keys.ts`
+- Shared `PrimaryButton` component (5 variants)
+- `DEMO_JOURNEY_ID`, `PEMBA_ATTRIBUTION`, `EVEREST_ROUTE_ID` extracted as constants
+- All inline shadows → tokens, all borderRadius → tokens
+
+**Route-driven content system (architectural violation fix):**
+⚠️ ARCHITECTURE.md says: "Every trail should be addable with zero code changes."
+This was violated — screens hardcoded "Everest", "Pemba", "Namche", "Kathmandu" everywhere.
+Fixed:
+- `RouteContent` type interface: all route-specific strings (guide, onboarding, paywall, checkpoint, intro)
+- `APP_STRINGS`: generic UI text (buttons, labels, errors)
+- `routes/everest.ts`: Everest route content
+- `routes/annapurna.ts`: Annapurna Base Camp Coming Soon placeholder
+- `RouteContentProvider` context + `useRouteContent()` hook
+- All 8 screen files refactored → zero hardcoded route strings in `src/screens/`
+- `ComingSoonCard` component wired to JourneyHomeScreen
+- Adding a new route = one content file + one registry entry + seed Firestore. Zero screen code changes.
+
+Commits: `6785d9c`, `7bc2e11`, `2c34e5a` on `codex/feature-s1-04-next`
+
+---
+
+❓ FOR CLAUDE REVIEW:
+
+Route content architecture — please review the `RouteContent` type and `useRouteContent()` pattern. Is this the right abstraction? Should we add route-level image mappings to `RouteContent` instead of the separate `milestone-images.ts` registry?
+
+---
+
+### What's left (Sprint 4 Phase 2+3):
+
+**Phase 2 — Native SDKs (blocked on native builds):**
+- S4-05: HealthKit iOS step source
+- S4-06: Health Connect Android step source
+- S4-07: AdMob native module
+- S4-08: RevenueCat native module
+
+**Phase 3 — Store Prep:**
+- S4-09: iOS Privacy Manifest
+- S4-10: Compliance documentation (Privacy Policy, Terms)
+
+**UI polish (founder not happy, revisiting later):**
+- Onboarding redesign: full-screen photos, swipeable carousel, introduce Pemba, animated page dots
+- General UI quality pass across all screens
+
+— Codex
+
+---
+
+[CODEX] — March 13, 2026
+
+✅ FREE RETURN PATH — COMPLETE (287 tests, typecheck clean)
+
+**Feature: Free users can return home from Namche Bazaar**
+
+ARCHITECTURE.md says no dead ends. Free users who decline the paywall at Namche were stuck in `PAYWALL_FROZEN` forever. Now they can choose "Return Home Instead" and walk the free return path back to Kathmandu.
+
+**Implementation:**
+- New state event `USER_CHOSE_RETURN_HOME`: `PAYWALL_FROZEN` → `WALKING`
+- `JourneyDoc` gains `isReturnPath: boolean` + `returnProgressMeters: number`
+- `RouteDoc` gains optional `returnTotalMeters`, `returnTotalStepsCanonical`, `returnMilestoneIds`
+- 4 return milestones: Namche → Phakding → Lukla → Kathmandu (19km free path)
+- `JourneyProgressionService.applySteps()` detects `isReturnPath` and uses return distance/milestones
+- Paywall check skipped on return path
+- Completion ceremony fires when free user reaches Kathmandu
+- Pemba dialogue written for all 4 return milestones
+- "Return Home Instead" button on PurchaseInvitationScreen (outline variant)
+- Route content system extended with `returnPath` content
+
+**User experience:**
+1. Walk Lukla → Phakding → Namche (free)
+2. Paywall screen appears with 3 options: Unlock ($4.99), Return Home, Not Now
+3. "Return Home" starts free return: Namche → Phakding → Lukla → Kathmandu
+4. Full ceremony at each return milestone with Pemba dialogue
+5. Completion ceremony in Kathmandu: "The journey was shorter, but no less real."
+
+**Also in this commit:**
+- `firebase.json`, `.firebaserc`, `functions/package.json` created for Cloud Functions deployment
+- `functions/tsconfig.json` updated with `outDir`/`rootDir` for proper compilation
+- Firebase CLI installed globally (awaiting `firebase login` for deployment)
+
+— Codex

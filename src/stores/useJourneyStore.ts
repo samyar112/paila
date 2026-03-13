@@ -5,6 +5,7 @@ import { JourneyProgressionService } from '../services/journey/JourneyProgressio
 import { JourneyStateMachine } from '../services/journey/JourneyStateMachine';
 import { StaticContentRepository } from '../repositories/StaticContentRepository';
 import { getLocalMidnightISO } from '../utils/dates';
+import { DEMO_RETURN_MILESTONES } from '../shared/dev/demo-journey';
 
 interface JourneyStoreState {
   journey: JourneyDoc | null;
@@ -28,6 +29,7 @@ interface JourneyStoreActions {
   ) => Promise<void>;
   chooseRest: (userId: string) => Promise<void>;
   chooseKeepWalking: (userId: string) => Promise<void>;
+  chooseReturnHome: (userId: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -174,6 +176,46 @@ export const useJourneyStore = create<JourneyStore>((set, get) => ({
       set({
         journey: prev,
         error: err instanceof Error ? err.message : 'Failed to save keep walking choice',
+      });
+    }
+  },
+
+  chooseReturnHome: async (userId: string) => {
+    const { journey, journeyId, route } = get();
+    if (!journey || !journeyId || !route) return;
+    if (journey.journeyState !== 'PAYWALL_FROZEN') return;
+
+    const prev = journey;
+    const newState = JourneyStateMachine.transition(
+      journey.journeyState,
+      'USER_CHOSE_RETURN_HOME',
+    );
+
+    // Load return milestones (from Firestore in production, demo data for dev)
+    const returnMilestones = DEMO_RETURN_MILESTONES;
+
+    const updated: JourneyDoc = {
+      ...journey,
+      journeyState: newState,
+      isReturnPath: true,
+      returnProgressMeters: 0,
+      progressMeters: journey.progressMeters,
+      frozenAtPaywall: false,
+      freezeReason: null,
+      currentCheckpointId: null,
+      pausedAtCheckpoint: false,
+      currentMilestoneIndex: 0,
+      unlockedMilestoneIds: ['namche-return'],
+      updatedAt: new Date(),
+    };
+
+    set({ journey: updated, milestones: returnMilestones });
+    try {
+      await JourneyService.updateJourney(userId, journeyId, updated);
+    } catch (err) {
+      set({
+        journey: prev,
+        error: err instanceof Error ? err.message : 'Failed to start return path',
       });
     }
   },

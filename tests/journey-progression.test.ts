@@ -51,6 +51,8 @@ function makeJourney(overrides: Partial<JourneyDoc> = {}): JourneyDoc {
     streakDays: 1,
     longestStreakDays: 1,
     lastStepDate: '2026-03-12', // yesterday relative to mocked today
+    isReturnPath: false,
+    returnProgressMeters: 0,
     completionShareUnlocked: false,
     ratingPromptEligible: false,
     updatedAt: new Date('2026-03-12'),

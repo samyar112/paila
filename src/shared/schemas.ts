@@ -154,6 +154,12 @@ export const routeSchema = z.object({
     west: z.number(),
   }),
   milestoneIds: z.array(z.string().min(1)),
+
+  // Return path for free users who decline paywall
+  returnTotalMeters: z.number().nonnegative().optional(),
+  returnTotalStepsCanonical: z.number().int().positive().optional(),
+  returnMilestoneIds: z.array(z.string().min(1)).optional(),
+
   createdAt: timestampLikeSchema,
   updatedAt: timestampLikeSchema,
 }).superRefine((route, ctx) => {
@@ -251,6 +257,10 @@ export const journeySchema = z.object({
   streakDays: z.number().int().min(0),
   longestStreakDays: z.number().int().min(0),
   lastStepDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullish(),
+
+  // Return path (free users who decline paywall)
+  isReturnPath: z.boolean(),
+  returnProgressMeters: z.number().nonnegative(),
 
   // Completion
   completionShareUnlocked: z.boolean(),

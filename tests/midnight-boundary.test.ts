@@ -35,6 +35,8 @@ function makeJourney(overrides: Partial<JourneyDoc> = {}): JourneyDoc {
     streakDays: 3,
     longestStreakDays: 5,
     lastStepDate: getLocalDateString(now),
+    isReturnPath: false,
+    returnProgressMeters: 0,
     completionShareUnlocked: false,
     ratingPromptEligible: false,
     updatedAt: now,

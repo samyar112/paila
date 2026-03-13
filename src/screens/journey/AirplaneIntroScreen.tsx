@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
 import { colors, radii } from '../../shared/theme/placeholder-theme';
-import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 import { AIRPLANE_INTRO_IMAGE } from '../../shared/assets/milestone-images';
+import { useRouteContent } from '../../shared/content/RouteContentContext';
+import { APP_STRINGS } from '../../shared/content/strings';
 
 interface AirplaneIntroScreenProps {
   onComplete: () => void;
 }
 
 export function AirplaneIntroScreen({ onComplete }: AirplaneIntroScreenProps): React.JSX.Element {
+  const routeContent = useRouteContent();
   const [fadeAnim] = useState(() => new Animated.Value(0));
   const [textFadeAnim] = useState(() => new Animated.Value(0));
 
@@ -50,13 +52,13 @@ export function AirplaneIntroScreen({ onComplete }: AirplaneIntroScreenProps): R
         <View style={styles.gradient} />
       </View>
 
-      {/* Pemba overlay text */}
+      {/* Guide overlay text */}
       <Animated.View style={[styles.textOverlay, { opacity: textFadeAnim }]}>
-        <Text style={styles.routeLabel}>KATHMANDU → LUKLA</Text>
+        <Text style={styles.routeLabel}>{routeContent.intro.routeLabel}</Text>
         <Text style={styles.pembaText}>
-          "Welcome. The mountain has been waiting for you."
+          {routeContent.intro.guideWelcome}
         </Text>
-        <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
+        <Text style={styles.pembaName}>{routeContent.guide.attribution}</Text>
       </Animated.View>
 
       {/* Skip button */}
@@ -65,7 +67,7 @@ export function AirplaneIntroScreen({ onComplete }: AirplaneIntroScreenProps): R
         onPress={onComplete}
         activeOpacity={0.7}
       >
-        <Text style={styles.skipText}>Skip</Text>
+        <Text style={styles.skipText}>{APP_STRINGS.intro.skip}</Text>
       </TouchableOpacity>
     </Animated.View>
   );

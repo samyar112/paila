@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "paila-dev",
+    "dev": "paila-dev",
+    "prod": "paila-prod"
+  }
+}

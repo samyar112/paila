@@ -4,6 +4,8 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "lib": ["ES2022"],
+    "outDir": "lib",
+    "rootDir": "..",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
@@ -14,6 +16,6 @@
     "skipLibCheck": true,
     "baseUrl": ".."
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "../src/shared/schemas.ts", "../src/shared/paths.ts"],
   "exclude": ["node_modules", "../node_modules"]
 }

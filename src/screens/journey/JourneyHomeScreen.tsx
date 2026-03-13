@@ -21,14 +21,9 @@ import { AdBanner } from '../../components/ads/AdBanner';
 import { colors, radii, shadows } from '../../shared/theme/placeholder-theme';
 import { EVEREST_ELEVATION_DATA } from '../../shared/everest-elevation-data';
 import { DEMO_JOURNEY_ID } from '../../shared/dev/demo-journey';
-
-const stateLabel: Record<string, string> = {
-  WALKING: 'Walking',
-  PAUSED_AT_CHECKPOINT: 'At Checkpoint',
-  RESTING: 'Resting',
-  PAYWALL_FROZEN: 'Journey Paused',
-  COMPLETED: 'Journey Complete',
-};
+import { APP_STRINGS } from '../../shared/content/strings';
+import { ComingSoonCard } from '../../components/journey/ComingSoonCard';
+import { getComingSoonRoutes } from '../../shared/content/route-content-registry';
 
 interface JourneyHomeScreenProps {
   userId: string;
@@ -115,7 +110,7 @@ export function JourneyHomeScreen({
   if (isLoading || !journey || !route) {
     return (
       <View style={styles.center}>
-        <Text style={styles.loadingText}>Loading your journey...</Text>
+        <Text style={styles.loadingText}>{APP_STRINGS.journeyHome.loading}</Text>
       </View>
     );
   }
@@ -161,7 +156,7 @@ export function JourneyHomeScreen({
       <View style={styles.stateRow}>
         <View style={[styles.stateDot, journey.journeyState === 'WALKING' && styles.stateDotActive]} />
         <Text style={styles.stateText}>
-          {stateLabel[journey.journeyState] ?? journey.journeyState}
+          {APP_STRINGS.journeyHome.stateLabels[journey.journeyState] ?? journey.journeyState}
         </Text>
       </View>
 
@@ -169,26 +164,26 @@ export function JourneyHomeScreen({
       <View style={styles.statsContainer}>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{todaySteps.toLocaleString()}</Text>
-          <Text style={styles.statLabel}>Steps Today</Text>
+          <Text style={styles.statLabel}>{APP_STRINGS.journeyHome.stepsToday}</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>
             {(journey.progressMeters / 1000).toFixed(1)}km
           </Text>
-          <Text style={styles.statLabel}>Distance</Text>
+          <Text style={styles.statLabel}>{APP_STRINGS.journeyHome.distance}</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>
             {Math.round(journey.progressPercent * 100)}%
           </Text>
-          <Text style={styles.statLabel}>Complete</Text>
+          <Text style={styles.statLabel}>{APP_STRINGS.journeyHome.complete}</Text>
         </View>
       </View>
 
       {/* Current Position */}
       <View style={styles.positionCard}>
         <Text style={styles.positionTitle}>
-          {currentMilestone?.englishTitle ?? 'Starting'}
+          {currentMilestone?.englishTitle ?? APP_STRINGS.journeyHome.starting}
         </Text>
         {nextMilestone && (
           <Text style={styles.positionSubtitle}>
@@ -207,6 +202,11 @@ export function JourneyHomeScreen({
           Best: {journey.longestStreakDays} days
         </Text>
       </View>
+
+      {/* Coming Soon Routes */}
+      {getComingSoonRoutes().map((route) => (
+        <ComingSoonCard key={route.routeId} route={route} style={styles.comingSoonCard} />
+      ))}
 
       {/* Dev Testing Panel */}
       {__DEV__ && isDemo && (
@@ -593,5 +593,8 @@ const styles = StyleSheet.create({
   streakBest: {
     fontSize: 13,
     color: colors.mutedText,
+  },
+  comingSoonCard: {
+    marginTop: 16,
   },
 });

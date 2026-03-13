@@ -2,11 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useCeremonyStore } from '../../stores/useCeremonyStore';
 import { colors, radii, typography } from '../../shared/theme/placeholder-theme';
-import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
 import { getMilestoneImage } from '../../shared/assets/milestone-images';
+import { useRouteContent } from '../../shared/content/RouteContentContext';
+import { APP_STRINGS } from '../../shared/content/strings';
 
 export function MilestoneCeremonyScreen(): React.JSX.Element | null {
+  const routeContent = useRouteContent();
   const activeCeremony = useCeremonyStore((s) => s.activeCeremony);
   const dismissCeremony = useCeremonyStore((s) => s.dismissCeremony);
   const [visibleLines, setVisibleLines] = useState(0);
@@ -35,11 +37,7 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   const milestoneImage = getMilestoneImage(activeCeremony.milestoneSlug);
   const allLinesVisible = visibleLines >= activeCeremony.dialogueLines.length;
 
-  const actionLabel = activeCeremony.nextAction === 'complete'
-    ? 'You Made It'
-    : activeCeremony.nextAction === 'paywall'
-      ? "See What's Ahead"
-      : 'Continue Journey';
+  const actionLabel = APP_STRINGS.ceremony.actionLabels[activeCeremony.nextAction] ?? activeCeremony.nextAction;
 
   const handleAction = () => {
     dismissCeremony();
@@ -63,11 +61,11 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
 
         {/* Ceremony Content */}
         <ScrollView style={styles.contentArea} contentContainerStyle={styles.contentInner}>
-          <Text style={styles.arrivedLabel}>YOU HAVE ARRIVED AT</Text>
+          <Text style={styles.arrivedLabel}>{APP_STRINGS.ceremony.arrivedLabel}</Text>
           <Text style={styles.milestoneName}>{activeCeremony.milestoneName}</Text>
           <Text style={styles.nepaliName}>{activeCeremony.nepaliName}</Text>
 
-          {/* Pemba's Dialogue */}
+          {/* Guide's Dialogue */}
           <View style={styles.dialogueContainer}>
             {activeCeremony.dialogueLines.slice(0, visibleLines).map((line, i) => (
               <Text key={`${activeCeremony.milestoneSlug}-${i}`} style={styles.dialogueLine}>"{line}"</Text>
@@ -77,7 +75,7 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
             )}
           </View>
 
-          <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
+          <Text style={styles.pembaName}>{routeContent.guide.attribution}</Text>
 
           {/* Action Button */}
           {allLinesVisible && (

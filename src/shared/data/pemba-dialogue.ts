@@ -1,13 +1,14 @@
 import type { RouteCharacterDoc } from '../schemas';
 import { EVEREST_ROUTE_ID } from '../dev/demo-journey';
+import { EVEREST_CONTENT } from '../content/routes/everest';
 
-export const PEMBA_ATTRIBUTION = '— Pemba Dorje Sherpa';
+export const PEMBA_ATTRIBUTION = EVEREST_CONTENT.guide.attribution;
 
 export const PEMBA_CHARACTER: RouteCharacterDoc = {
   routeId: EVEREST_ROUTE_ID,
-  characterId: 'pemba-dorje-sherpa',
-  name: 'Pemba Dorje Sherpa',
-  role: 'Guide',
+  characterId: EVEREST_CONTENT.guide.characterId,
+  name: EVEREST_CONTENT.guide.name,
+  role: EVEREST_CONTENT.guide.role,
   description: 'Your guide through the Himalayas. Born in Namche Bazaar, summited Everest three times.',
   milestoneDialogue: {
     'lukla': [
@@ -89,6 +90,26 @@ export const PEMBA_CHARACTER: RouteCharacterDoc = {
       'Kathmandu. You have completed the journey.',
       'From Lukla to the summit and back. Every step was yours.',
       'The mountain thanks you. And so do I. Namaste.',
+    ],
+    'namche-return': [
+      'The mountain will always be here.',
+      'For now, we head home. There is no shame in that.',
+      'Let us walk back together.',
+    ],
+    'phakding-return': [
+      'Phakding again. The river remembers you.',
+      'The trail downhill is faster, but no less beautiful.',
+      'You carry Namche in your heart now.',
+    ],
+    'lukla-return-free': [
+      'Lukla. The circle is nearly complete.',
+      'You came, you walked, you saw the mountains.',
+      'One more flight home. You can always return.',
+    ],
+    'kathmandu-return': [
+      'Kathmandu. You are home.',
+      'The journey was shorter, but no less real.',
+      'The mountain will wait for you. Come back when you are ready. Namaste.',
     ],
   },
   keepWalkingLines: [

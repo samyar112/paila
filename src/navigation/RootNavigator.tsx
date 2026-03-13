@@ -17,6 +17,8 @@ import { useCeremonyStore } from '../stores/useCeremonyStore';
 import { appStorage } from '../shared/storage/app-storage';
 import { STORAGE_KEYS } from '../shared/storage/storage-keys';
 import { signOut } from '../services/auth/AuthService';
+import { RouteContentProvider } from '../shared/content/RouteContentContext';
+import { getRouteContent, getDefaultRouteContent } from '../shared/content/route-content-registry';
 
 type RootStackParamList = {
   Onboarding: undefined;
@@ -63,6 +65,8 @@ export function RootNavigator({
   const lastDismissedAction = useCeremonyStore((s) => s.lastDismissedAction);
   const clearLastDismissedAction = useCeremonyStore((s) => s.clearLastDismissedAction);
 
+  const routeContent = route ? getRouteContent(route.slug) : getDefaultRouteContent();
+
   const [hasOnboarded, setHasOnboarded] = useState(
     () => appStorage.getBoolean(STORAGE_KEYS.HAS_ONBOARDED) === true,
   );
@@ -89,6 +93,13 @@ export function RootNavigator({
     void useJourneyStore.getState().loadJourney(userId);
   }, [userId]);
 
+  const handleReturnHome = useCallback(() => {
+    void useJourneyStore.getState().chooseReturnHome(userId);
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('JourneyHome');
+    }
+  }, [userId, navigationRef]);
+
   useEffect(() => {
     if (!lastDismissedAction) return;
     if (!navigationRef.isReady()) return;
@@ -102,6 +113,7 @@ export function RootNavigator({
 
   return (
     <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+      <RouteContentProvider content={routeContent}>
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
@@ -134,10 +146,11 @@ export function RootNavigator({
             >
               {() => (
                 <PurchaseInvitationScreen
-                  routeName={route?.name ?? 'Everest Summit & Return'}
-                  productId={route?.premiumContentPackId ?? 'everest-summit-premium'}
+                  routeName={route?.name ?? routeContent.routeName}
+                  productId={route?.premiumContentPackId ?? routeContent.routeId}
                   priceLabel="$4.99"
                   onPurchaseComplete={handlePurchaseComplete}
+                  onReturnHome={handleReturnHome}
                   onDismiss={NOOP}
                 />
               )}
@@ -165,6 +178,7 @@ export function RootNavigator({
           </Stack.Screen>
         )}
       </Stack.Navigator>
+      </RouteContentProvider>
     </NavigationContainer>
   );
 }

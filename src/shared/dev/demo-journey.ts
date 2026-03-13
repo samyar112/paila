@@ -36,6 +36,9 @@ export const DEMO_ROUTE: RouteDoc = {
     'camp-3', 'camp-4-south-col', 'the-summit', 'base-camp-return',
     'lukla-return', 'kathmandu',
   ],
+  returnTotalMeters: 19000,
+  returnTotalStepsCanonical: 28000,
+  returnMilestoneIds: ['namche-return', 'phakding-return', 'lukla-return-free', 'kathmandu-return'],
   createdAt: now,
   updatedAt: now,
 };
@@ -67,23 +70,47 @@ const milestonesRaw: Array<{
   { index: 15, slug: 'kathmandu', nepali: 'काठमाडौं', english: 'Kathmandu', trigger: 340000, tier: 'premium', ceremony: 'completion' },
 ];
 
-export const DEMO_MILESTONES: MilestoneDoc[] = milestonesRaw.map((m) => ({
-  routeId: EVEREST_ROUTE_ID,
-  routeVersion: 1,
-  index: m.index,
-  nepaliTitle: m.nepali,
-  englishTitle: m.english,
-  titleSlug: m.slug,
-  triggerMeters: m.trigger,
-  triggerSteps: Math.round((m.trigger / 340000) * 500000),
-  tier: m.tier,
-  assetBundleId: `everest-${m.slug}`,
-  unlockOnce: true as const,
-  badgeId: null,
-  ceremonyType: m.ceremony,
-  createdAt: now,
-  updatedAt: now,
-}));
+const returnMilestonesRaw: Array<{
+  index: number;
+  slug: string;
+  nepali: string;
+  english: string;
+  trigger: number;
+  tier: 'free' | 'premium';
+  ceremony: 'standard' | 'paywall' | 'completion';
+}> = [
+  { index: 0, slug: 'namche-return', nepali: 'नाम्चे फिर्ता', english: 'Leaving Namche Bazaar', trigger: 0, tier: 'free', ceremony: 'standard' },
+  { index: 1, slug: 'phakding-return', nepali: 'फक्दिङ फिर्ता', english: 'Phakding', trigger: 6000, tier: 'free', ceremony: 'standard' },
+  { index: 2, slug: 'lukla-return-free', nepali: 'लुक्ला फिर्ता', english: 'Lukla', trigger: 11000, tier: 'free', ceremony: 'standard' },
+  { index: 3, slug: 'kathmandu-return', nepali: 'काठमाडौं फिर्ता', english: 'Kathmandu', trigger: 19000, tier: 'free', ceremony: 'completion' },
+];
+
+function buildMilestones(
+  raw: typeof milestonesRaw,
+  totalMeters: number,
+  totalSteps: number,
+): MilestoneDoc[] {
+  return raw.map((m) => ({
+    routeId: EVEREST_ROUTE_ID,
+    routeVersion: 1,
+    index: m.index,
+    nepaliTitle: m.nepali,
+    englishTitle: m.english,
+    titleSlug: m.slug,
+    triggerMeters: m.trigger,
+    triggerSteps: Math.round((m.trigger / totalMeters) * totalSteps),
+    tier: m.tier,
+    assetBundleId: `everest-${m.slug}`,
+    unlockOnce: true as const,
+    badgeId: null,
+    ceremonyType: m.ceremony,
+    createdAt: now,
+    updatedAt: now,
+  }));
+}
+
+export const DEMO_MILESTONES: MilestoneDoc[] = buildMilestones(milestonesRaw, 340000, 500000);
+export const DEMO_RETURN_MILESTONES: MilestoneDoc[] = buildMilestones(returnMilestonesRaw, 19000, 28000);
 
 export function makeDemoJourney(userId: string): JourneyDoc {
   const today = new Date().toISOString().slice(0, 10);
@@ -114,6 +141,8 @@ export function makeDemoJourney(userId: string): JourneyDoc {
     streakDays: 3,
     longestStreakDays: 3,
     lastStepDate: today,
+    isReturnPath: false,
+    returnProgressMeters: 0,
     completionShareUnlocked: false,
     ratingPromptEligible: false,
     updatedAt: now,

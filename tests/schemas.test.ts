@@ -45,6 +45,8 @@ describe('schemas', () => {
       streakDays: 0,
       longestStreakDays: 0,
       lastStepDate: null,
+      isReturnPath: false,
+      returnProgressMeters: 0,
       completionShareUnlocked: false,
       ratingPromptEligible: false,
       updatedAt: new Date(),

@@ -8,8 +8,9 @@ import {
 } from 'react-native';
 import { useJourneyStore, selectIsAtCheckpoint } from '../../stores/useJourneyStore';
 import { colors, radii, typography } from '../../shared/theme/placeholder-theme';
-import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
+import { useRouteContent } from '../../shared/content/RouteContentContext';
+import { APP_STRINGS } from '../../shared/content/strings';
 
 interface CheckpointDecisionSheetProps {
   userId: string;
@@ -18,6 +19,7 @@ interface CheckpointDecisionSheetProps {
 export function CheckpointDecisionSheet({
   userId,
 }: CheckpointDecisionSheetProps): React.JSX.Element | null {
+  const routeContent = useRouteContent();
   const isAtCheckpoint = useJourneyStore(selectIsAtCheckpoint);
   const journey = useJourneyStore((s) => s.journey);
   const milestones = useJourneyStore((s) => s.milestones);
@@ -43,9 +45,9 @@ export function CheckpointDecisionSheet({
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           {/* Checkpoint Info */}
-          <Text style={styles.arrivedLabel}>You have arrived at</Text>
+          <Text style={styles.arrivedLabel}>{APP_STRINGS.checkpoint.arrivedLabel}</Text>
           <Text style={styles.checkpointName}>
-            {checkpoint?.englishTitle ?? 'Checkpoint'}
+            {checkpoint?.englishTitle ?? APP_STRINGS.checkpoint.fallbackName}
           </Text>
           {checkpoint && (
             <Text style={styles.altitude}>
@@ -69,22 +71,22 @@ export function CheckpointDecisionSheet({
             </View>
           </View>
 
-          {/* Pemba's words */}
+          {/* Guide's words */}
           <Text style={styles.pembaQuote}>
-            "Rest well. The mountain will be here tomorrow."
+            {routeContent.checkpoint.guideRestQuote}
           </Text>
-          <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
+          <Text style={styles.pembaName}>{routeContent.guide.attribution}</Text>
 
           {/* Decision buttons */}
           <PrimaryButton
-            label="Rest here"
-            subtitle="End today. Tomorrow starts from here."
+            label={APP_STRINGS.checkpoint.rest}
+            subtitle={APP_STRINGS.checkpoint.restSub}
             onPress={handleRest}
             style={styles.restButton}
           />
           <PrimaryButton
-            label="Keep walking today"
-            subtitle="Continue until midnight. Open the app again to claim more steps."
+            label={APP_STRINGS.checkpoint.keepWalking}
+            subtitle={APP_STRINGS.checkpoint.keepWalkingSub}
             onPress={handleKeepWalking}
             variant="outline"
           />

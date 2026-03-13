@@ -7,31 +7,20 @@ import {
 } from 'react-native';
 import { colors, radii } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
+import { useRouteContent } from '../../shared/content/RouteContentContext';
+import { APP_STRINGS } from '../../shared/content/strings';
 
 interface OnboardingScreenProps {
   onComplete: (countryCode: string) => void;
 }
 
-const SLIDES = [
-  {
-    title: 'Every Step Counts',
-    subtitle: 'Your daily walking steps carry you along real trails around the world.',
-  },
-  {
-    title: 'Everest Awaits',
-    subtitle: 'Your first journey takes you from Lukla to the summit of Everest and back to Kathmandu. 340 kilometers. Every step is yours.',
-  },
-  {
-    title: 'The Mountain Is Patient',
-    subtitle: 'Walk at your pace. Rest when you need. Pemba, your guide, walks with you every step.',
-  },
-  {
-    title: 'Ad Supports the App',
-    subtitle: 'We show a small ad to keep Paila free. It never affects your journey progress, steps, or data. Unlock the full trek to remove ads.',
-  },
-];
-
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.JSX.Element {
+  const routeContent = useRouteContent();
+  const SLIDES = [
+    ...routeContent.onboarding.slides,
+    { title: APP_STRINGS.ads.title, subtitle: APP_STRINGS.ads.subtitle },
+  ];
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [countryCode, setCountryCode] = useState('');
 
@@ -53,21 +42,21 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
     return (
       <View style={styles.container}>
         <View style={styles.slideContent}>
-          <Text style={styles.title}>Where are you from?</Text>
+          <Text style={styles.title}>{routeContent.onboarding.countryPicker.title}</Text>
           <Text style={styles.subtitle}>
-            This helps us personalize your journey. Enter your country code (e.g. US, NP, UK).
+            {routeContent.onboarding.countryPicker.subtitle}
           </Text>
           <TextInput
             style={styles.input}
             value={countryCode}
             onChangeText={setCountryCode}
-            placeholder="Country code (e.g. NP)"
+            placeholder={routeContent.onboarding.countryPicker.placeholder}
             placeholderTextColor={colors.sage}
             maxLength={2}
             autoCapitalize="characters"
             autoCorrect={false}
           />
-          <PrimaryButton label="Begin Journey" onPress={handleComplete} variant="accent" style={styles.beginButton} />
+          <PrimaryButton label={APP_STRINGS.onboarding.beginJourney} onPress={handleComplete} variant="accent" style={styles.beginButton} />
         </View>
         <View style={styles.dots}>
           {[...SLIDES, null].map((_, i) => (
@@ -91,7 +80,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
           <View key={i} style={[styles.dot, i === currentSlide && styles.dotActive]} />
         ))}
       </View>
-      <PrimaryButton label="Next" onPress={handleNext} variant="inverse" style={styles.nextButton} />
+      <PrimaryButton label={APP_STRINGS.onboarding.next} onPress={handleNext} variant="inverse" style={styles.nextButton} />
     </View>
   );
 }

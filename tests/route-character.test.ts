@@ -18,6 +18,10 @@ const EXPECTED_MILESTONES = [
   'base-camp-return',
   'lukla-return',
   'kathmandu',
+  'namche-return',
+  'phakding-return',
+  'lukla-return-free',
+  'kathmandu-return',
 ];
 
 const EXPECTED_TRIGGERS = [
@@ -54,9 +58,9 @@ describe('routeCharacterSchema', () => {
     expect(routeCharacterSchema.safeParse(invalid).success).toBe(false);
   });
 
-  it('milestoneDialogue has entries for all 16 milestones', () => {
+  it('milestoneDialogue has entries for all milestones including return path', () => {
     const slugs = Object.keys(PEMBA_CHARACTER.milestoneDialogue);
-    expect(slugs).toHaveLength(16);
+    expect(slugs).toHaveLength(20);
     for (const milestone of EXPECTED_MILESTONES) {
       expect(slugs).toContain(milestone);
     }

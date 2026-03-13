@@ -33,6 +33,17 @@ export class JourneyProgressionService {
       );
     }
 
+    const isReturn = journey.isReturnPath;
+    const effectiveTotalMeters = isReturn
+      ? (route.returnTotalMeters ?? route.totalMeters)
+      : route.totalMeters;
+    const effectiveTotalSteps = isReturn
+      ? (route.returnTotalStepsCanonical ?? route.totalStepsCanonical)
+      : route.totalStepsCanonical;
+    const currentProgress = isReturn
+      ? journey.returnProgressMeters
+      : journey.progressMeters;
+
     const events: JourneyEvent[] = [];
     const localDate = getLocalDateString();
 
@@ -43,11 +54,11 @@ export class JourneyProgressionService {
 
     const deltaMeters = stepsToMeters(
       claimedDelta,
-      route.totalStepsCanonical,
-      route.totalMeters,
+      effectiveTotalSteps,
+      effectiveTotalMeters,
     );
 
-    let newProgress = journey.progressMeters + deltaMeters;
+    let newProgress = currentProgress + deltaMeters;
     let newState: JourneyState = journey.journeyState;
     let pausedAtCheckpoint = false;
     let currentCheckpointId = journey.currentCheckpointId;
@@ -57,6 +68,7 @@ export class JourneyProgressionService {
     );
 
     if (
+      !isReturn &&
       !route.isFreeRoute &&
       journey.purchaseState === 'free' &&
       !isNepalLocal() &&
@@ -74,13 +86,13 @@ export class JourneyProgressionService {
           milestoneId: paywallMilestone.titleSlug,
         });
       }
-    } else if (newProgress >= route.totalMeters) {
-      newProgress = route.totalMeters;
+    } else if (newProgress >= effectiveTotalMeters) {
+      newProgress = effectiveTotalMeters;
       newState = JourneyStateMachine.transition(newState, 'BASE_CAMP_REACHED');
       events.push({ type: 'JOURNEY_COMPLETED' });
     } else {
       const nextCheckpoint = this.findNextCheckpoint(
-        journey.progressMeters,
+        currentProgress,
         sortedMilestones,
         journey.unlockedMilestoneIds,
       );
@@ -133,8 +145,9 @@ export class JourneyProgressionService {
       ...journey,
       journeyState: newState,
       totalStepsApplied,
-      progressMeters: newProgress,
-      progressPercent: progressPercent(newProgress, route.totalMeters),
+      progressMeters: isReturn ? journey.progressMeters : newProgress,
+      returnProgressMeters: isReturn ? newProgress : journey.returnProgressMeters,
+      progressPercent: progressPercent(newProgress, effectiveTotalMeters),
       currentMilestoneIndex,
       currentCheckpointId,
       unlockedMilestoneIds: unlockedMilestones,
