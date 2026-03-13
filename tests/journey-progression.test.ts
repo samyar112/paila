@@ -111,6 +111,8 @@ function makeMilestone(
     assetBundleId: `bundle-${index}`,
     unlockOnce: true as const,
     ceremonyType: 'standard',
+    elevationMeters: 0,
+    facts: [],
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     ...overrides,

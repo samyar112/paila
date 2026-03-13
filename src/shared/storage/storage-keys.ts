@@ -21,6 +21,9 @@ export const STORAGE_KEYS = {
   // Country
   COUNTRY_CODE: 'app:country_code',
 
+  // Quiz answers
+  QUIZ_PREFIX: 'quiz:',
+
   // Permissions
   PERMISSIONS_COMPLETED: 'app:permissions_completed',
   HEALTH_PERMISSION_GRANTED: 'app:health_permission_granted',

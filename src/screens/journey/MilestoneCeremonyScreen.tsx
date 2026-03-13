@@ -1,17 +1,28 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, Modal, ScrollView, Image } from 'react-native';
 import { useCeremonyStore } from '../../stores/useCeremonyStore';
-import { colors, radii, typography } from '../../shared/theme/placeholder-theme';
+import { useJourneyStore } from '../../stores/useJourneyStore';
+import { colors, radii, typography, shadows } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
 import { getMilestoneImage } from '../../shared/assets/milestone-images';
 import { useRouteContent } from '../../shared/content/RouteContentContext';
 import { APP_STRINGS } from '../../shared/content/strings';
+import { formatElevation } from '../../utils/units';
+
+const HERO_HEIGHT = 280;
 
 export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   const routeContent = useRouteContent();
   const activeCeremony = useCeremonyStore((s) => s.activeCeremony);
   const dismissCeremony = useCeremonyStore((s) => s.dismissCeremony);
+  const milestones = useJourneyStore((s) => s.milestones);
   const [visibleLines, setVisibleLines] = useState(0);
+
+  // Look up matching MilestoneDoc for elevationMeters and facts
+  const milestoneDoc = useMemo(() => {
+    if (!activeCeremony) return null;
+    return milestones.find((m) => m.titleSlug === activeCeremony.milestoneSlug) ?? null;
+  }, [activeCeremony?.milestoneSlug, milestones]);
 
   useEffect(() => {
     if (!activeCeremony) {
@@ -37,7 +48,12 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   const milestoneImage = getMilestoneImage(activeCeremony.milestoneSlug);
   const allLinesVisible = visibleLines >= activeCeremony.dialogueLines.length;
 
-  const actionLabel = APP_STRINGS.ceremony.actionLabels[activeCeremony.nextAction] ?? activeCeremony.nextAction;
+  const actionLabel =
+    APP_STRINGS.ceremony.actionLabels[activeCeremony.nextAction] ??
+    activeCeremony.nextAction;
+
+  const elevationMeters = milestoneDoc?.elevationMeters ?? activeCeremony.altitudeMeters;
+  const facts = milestoneDoc?.facts ?? [];
 
   const handleAction = () => {
     dismissCeremony();
@@ -47,45 +63,76 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   return (
     <Modal visible animationType="fade" onRequestClose={handleAction}>
       <View style={styles.container}>
-        {/* Hero Image */}
+        {/* Hero area with milestone image */}
         <View style={styles.heroArea}>
           {milestoneImage ? (
             <Image source={milestoneImage} style={styles.heroImage} resizeMode="cover" />
           ) : null}
           <View style={styles.heroOverlay}>
-            <Text style={styles.altitudeBadge}>
-              {activeCeremony.altitudeMeters.toLocaleString()}m
+            <Text style={styles.arrivedLabel}>
+              {APP_STRINGS.ceremony.arrivedLabel}
+            </Text>
+            <Text style={styles.heroLocationName}>
+              {activeCeremony.milestoneName}
+            </Text>
+            <Text style={styles.heroElevation}>
+              {formatElevation(elevationMeters)}
             </Text>
           </View>
         </View>
 
-        {/* Ceremony Content */}
-        <ScrollView style={styles.contentArea} contentContainerStyle={styles.contentInner}>
-          <Text style={styles.arrivedLabel}>{APP_STRINGS.ceremony.arrivedLabel}</Text>
-          <Text style={styles.milestoneName}>{activeCeremony.milestoneName}</Text>
+        {/* Scrollable ceremony content */}
+        <ScrollView
+          style={styles.contentArea}
+          contentContainerStyle={styles.contentInner}
+        >
           <Text style={styles.nepaliName}>{activeCeremony.nepaliName}</Text>
 
           {/* Guide's Dialogue */}
           <View style={styles.dialogueContainer}>
             {activeCeremony.dialogueLines.slice(0, visibleLines).map((line, i) => (
-              <Text key={`${activeCeremony.milestoneSlug}-${i}`} style={styles.dialogueLine}>"{line}"</Text>
+              <View
+                key={`${activeCeremony.milestoneSlug}-${i}`}
+                style={styles.dialogueLineWrapper}
+              >
+                <Text style={styles.dialogueLine}>&ldquo;{line}&rdquo;</Text>
+              </View>
             ))}
             {!allLinesVisible && (
               <Text style={styles.typingIndicator}>...</Text>
             )}
           </View>
 
-          <Text style={styles.pembaName}>{routeContent.guide.attribution}</Text>
+          <Text style={styles.guideAttribution}>
+            {routeContent.guide.attribution}
+          </Text>
 
-          {/* Action Button */}
-          {allLinesVisible && (
+          {/* Facts section */}
+          {facts.length > 0 && (
+            <View style={styles.factsContainer}>
+              <Text style={styles.factsHeader}>Did you know?</Text>
+              {facts.map((fact, i) => (
+                <Text
+                  key={`fact-${i}`}
+                  style={styles.factItem}
+                >
+                  • {fact}
+                </Text>
+              ))}
+            </View>
+          )}
+        </ScrollView>
+
+        {/* Fixed footer action button */}
+        {allLinesVisible && (
+          <View style={styles.footer}>
             <PrimaryButton
               label={actionLabel}
               onPress={handleAction}
-              variant={activeCeremony.nextAction === 'complete' ? 'accent' : 'primary'}
+              variant="accent"
             />
-          )}
-        </ScrollView>
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -94,7 +141,7 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   heroArea: {
-    height: '40%',
+    height: HERO_HEIGHT,
     backgroundColor: colors.primary,
     justifyContent: 'flex-end',
   },
@@ -105,55 +152,76 @@ const styles = StyleSheet.create({
   },
   heroOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: colors.overlayLight,
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
     padding: 20,
     paddingBottom: 24,
   },
-  altitudeBadge: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.sage,
-    letterSpacing: 1,
-  },
-  contentArea: { flex: 1 },
-  contentInner: { padding: 24, paddingBottom: 40 },
   arrivedLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: colors.mutedText,
+    ...typography.label,
+    color: colors.sage,
     letterSpacing: 2,
     marginBottom: 8,
   },
-  milestoneName: {
-    fontSize: 32,
+  heroLocationName: {
+    ...typography.heading,
+    fontSize: 28,
     fontWeight: '800',
-    color: colors.text,
+    color: colors.background,
     marginBottom: 4,
   },
+  heroElevation: {
+    ...typography.label,
+    color: colors.sage,
+  },
+  contentArea: { flex: 1 },
+  contentInner: { padding: 24, paddingBottom: 24 },
   nepaliName: {
     fontSize: 18,
     fontStyle: 'italic',
     color: colors.mutedText,
-    marginBottom: 28,
+    marginBottom: 24,
   },
   dialogueContainer: { marginBottom: 16 },
+  dialogueLineWrapper: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.accent,
+    paddingLeft: 12,
+    marginBottom: 12,
+  },
   dialogueLine: {
-    fontSize: 16,
-    lineHeight: 26,
+    ...typography.body,
     color: colors.accentDeep,
     fontStyle: 'italic',
-    marginBottom: 12,
   },
   typingIndicator: {
     fontSize: 20,
     color: colors.sage,
     letterSpacing: 4,
   },
-  pembaName: {
-    fontSize: 13,
+  guideAttribution: {
+    ...typography.label,
     color: colors.mutedText,
-    marginBottom: 32,
+    marginBottom: 24,
   },
-
+  factsContainer: {
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  factsHeader: {
+    ...typography.label,
+    color: colors.mutedText,
+    marginBottom: 12,
+  },
+  factItem: {
+    ...typography.body,
+    color: colors.text,
+    marginBottom: 8,
+  },
+  footer: {
+    padding: 20,
+    paddingBottom: 36,
+    backgroundColor: colors.background,
+    ...shadows.sm,
+  },
 });

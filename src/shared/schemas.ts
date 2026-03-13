@@ -206,6 +206,8 @@ export const milestoneSchema = z.object({
   unlockOnce: z.literal(true),
   badgeId: z.string().min(1).nullable().optional(),
   ceremonyType: ceremonyTypeSchema,
+  elevationMeters: z.number().nonnegative(),
+  facts: z.array(z.string().min(1)).default([]),
   createdAt: timestampLikeSchema,
   updatedAt: timestampLikeSchema,
 });

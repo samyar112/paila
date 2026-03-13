@@ -1,6 +1,15 @@
 // Route content types. Every route (Everest, Camino, Inca Trail) implements this.
 // Screens read from this shape -- they never reference a specific route by name.
 
+export interface QuizQuestion {
+  pembaQuestion: string;
+  options: string[];
+  storageKey: string;
+  storageValues: string[];
+  pembaResponse: string;
+  fact: string;
+}
+
 export interface GuideContent {
   name: string;
   attribution: string;
@@ -46,6 +55,8 @@ export interface RouteContent {
   intro: IntroContent;
 
   paywall: PaywallContent;
+
+  quiz: QuizQuestion[];
 
   checkpoint: {
     guideRestQuote: string;

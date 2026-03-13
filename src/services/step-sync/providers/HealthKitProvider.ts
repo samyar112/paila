@@ -29,7 +29,7 @@ export class HealthKitProvider implements StepProvider {
 
     return new Promise<boolean>((resolve) => {
       try {
-        AppleHealthKit.isAvailable((err: string | undefined, available: boolean) => {
+        AppleHealthKit.isAvailable((err, available) => {
           if (err) {
             resolve(false);
             return;
@@ -48,7 +48,7 @@ export class HealthKitProvider implements StepProvider {
 
     return new Promise<boolean>((resolve) => {
       try {
-        AppleHealthKit.initHealthKit(HEALTHKIT_PERMISSIONS, (err: string) => {
+        AppleHealthKit.initHealthKit(HEALTHKIT_PERMISSIONS, (err) => {
           if (err) {
             this.permissionGranted = false;
             resolve(false);
@@ -87,7 +87,7 @@ export class HealthKitProvider implements StepProvider {
       try {
         AppleHealthKit.getStepCount(
           options,
-          (err: string | undefined, results: { value: number }) => {
+          (err, results) => {
             if (err || !results) {
               resolve(null);
               return;
