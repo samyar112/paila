@@ -9,7 +9,7 @@ import { configureGoogleSignIn } from './src/services/auth/AuthService';
 import { getAppEnvironment } from './src/shared/config/app-env';
 import { initializeFirebase, runStartupFirestoreRead } from './src/shared/firebase/firebase';
 import { verifyAppStorage } from './src/shared/storage/app-storage';
-import { placeholderTheme } from './src/shared/theme/placeholder-theme';
+import { colors } from './src/shared/theme/placeholder-theme';
 
 // DEV-ONLY: set to true to skip Firebase auth and use a mock user
 const DEV_BYPASS_AUTH = __DEV__;
@@ -66,7 +66,7 @@ export default function App() {
   if (isStorageReady !== true || isFirebaseReady !== true || !authReady) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator color={placeholderTheme.primary} size="large" />
+        <ActivityIndicator color={colors.primary} size="large" />
         <Text style={styles.loadingTitle}>Paila</Text>
         <Text style={styles.loadingSubtitle}>
           {isStorageReady === false
@@ -100,21 +100,21 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: placeholderTheme.background,
+    backgroundColor: colors.background,
     paddingHorizontal: 24,
   },
   loadingTitle: {
     marginTop: 16,
     fontSize: 28,
     fontWeight: '700',
-    color: placeholderTheme.primary,
+    color: colors.primary,
   },
   loadingSubtitle: {
     marginTop: 8,
     fontSize: 15,
     lineHeight: 22,
     textAlign: 'center',
-    color: placeholderTheme.mutedText,
+    color: colors.mutedText,
   },
   environmentBadge: {
     marginTop: 14,
@@ -122,6 +122,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
-    color: placeholderTheme.primary,
+    color: colors.primary,
   },
 });

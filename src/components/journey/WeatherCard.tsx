@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii, shadows } from '../../shared/theme/placeholder-theme';
 import type { WeatherData } from '../../services/weather/WeatherService';
 
 interface WeatherCardProps {
@@ -44,13 +44,9 @@ export function WeatherCard({ weather, isLoading }: WeatherCardProps): React.JSX
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    ...shadows.sm,
   },
   row: {
     flexDirection: 'row',

@@ -11,7 +11,7 @@ import { AirplaneIntroScreen } from '../screens/journey/AirplaneIntroScreen';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { PurchaseInvitationScreen } from '../screens/purchase/PurchaseInvitationScreen';
 import { DeleteAccountScreen } from '../screens/settings/DeleteAccountScreen';
-import { placeholderTheme } from '../shared/theme/placeholder-theme';
+import { colors } from '../shared/theme/placeholder-theme';
 import { useJourneyStore, selectIsPaywallFrozen } from '../stores/useJourneyStore';
 import { useCeremonyStore } from '../stores/useCeremonyStore';
 import { appStorage } from '../shared/storage/app-storage';
@@ -32,12 +32,12 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const navigationTheme: Theme = {
   dark: false,
   colors: {
-    primary: placeholderTheme.primary,
-    background: placeholderTheme.background,
-    card: placeholderTheme.card,
-    text: placeholderTheme.text,
-    border: placeholderTheme.border,
-    notification: placeholderTheme.notification,
+    primary: colors.primary,
+    background: colors.background,
+    card: colors.card,
+    text: colors.text,
+    border: colors.border,
+    notification: colors.notification,
   },
   fonts: {
     regular: { fontFamily: 'System', fontWeight: '400' },
@@ -167,6 +167,6 @@ export function RootNavigator({
 
 const styles = StyleSheet.create({
   navigatorContent: {
-    backgroundColor: placeholderTheme.background,
+    backgroundColor: colors.background,
   },
 });

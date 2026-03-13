@@ -6,9 +6,9 @@ import {
   ActivityIndicator,
   type ViewStyle,
 } from 'react-native';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii } from '../../shared/theme/placeholder-theme';
 
-type ButtonVariant = 'primary' | 'accent' | 'outline' | 'danger';
+type ButtonVariant = 'primary' | 'accent' | 'outline' | 'danger' | 'inverse';
 
 interface PrimaryButtonProps {
   label: string;
@@ -25,6 +25,7 @@ const BG: Record<ButtonVariant, string> = {
   accent: colors.accentDeep,
   outline: colors.card,
   danger: colors.error,
+  inverse: colors.background,
 };
 
 const TEXT_COLOR: Record<ButtonVariant, string> = {
@@ -32,6 +33,7 @@ const TEXT_COLOR: Record<ButtonVariant, string> = {
   accent: colors.background,
   outline: colors.text,
   danger: colors.background,
+  inverse: colors.text,
 };
 
 export function PrimaryButton({
@@ -83,7 +85,7 @@ export function PrimaryButton({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 14,
+    borderRadius: radii.button,
     padding: 18,
     alignItems: 'center',
   },

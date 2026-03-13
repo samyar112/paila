@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Image } from 'react-native';
+import { colors, radii } from '../../shared/theme/placeholder-theme';
 import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
+import { AIRPLANE_INTRO_IMAGE } from '../../shared/assets/milestone-images';
 
 interface AirplaneIntroScreenProps {
   onComplete: () => void;
@@ -43,6 +44,9 @@ export function AirplaneIntroScreen({ onComplete }: AirplaneIntroScreenProps): R
     <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
       {/* Video placeholder — swap with expo-av Video component when content is ready */}
       <View style={styles.videoPlaceholder}>
+        {AIRPLANE_INTRO_IMAGE ? (
+          <Image source={AIRPLANE_INTRO_IMAGE} style={styles.backgroundImage} resizeMode="cover" />
+        ) : null}
         <View style={styles.gradient} />
       </View>
 
@@ -76,9 +80,14 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     backgroundColor: colors.primary,
   },
+  backgroundImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
   gradient: {
     flex: 1,
-    backgroundColor: 'rgba(46, 58, 46, 0.7)',
+    backgroundColor: colors.overlayDark,
   },
   textOverlay: {
     flex: 1,
@@ -111,8 +120,8 @@ const styles = StyleSheet.create({
     right: 24,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: radii.xl,
+    backgroundColor: colors.overlayGlass,
   },
   skipText: {
     fontSize: 14,

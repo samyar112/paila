@@ -10,7 +10,11 @@ export const colors = {
   sage: '#B8C5A2',
   error: '#b42318',
   errorBackground: '#FFF3F0',
+  progressMarker: '#D4451A',
   overlay: 'rgba(46, 58, 46, 0.5)',
+  overlayLight: 'rgba(46, 58, 46, 0.3)',
+  overlayDark: 'rgba(46, 58, 46, 0.7)',
+  overlayGlass: 'rgba(255, 255, 255, 0.15)',
   adBanner: '#E8EDE2',
   adBannerBorder: '#D0D9C6',
   notification: '#4A9B3F',
@@ -52,6 +56,4 @@ export const shadows = {
   },
 } as const;
 
-// Alias for backwards compatibility with navigator + scaffold
-export const placeholderTheme = colors;
 

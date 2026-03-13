@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { signOut } from '../services/auth/AuthService';
 import { getAppEnvironment, getFirebaseProjectId } from '../shared/config/app-env';
-import { placeholderTheme } from '../shared/theme/placeholder-theme';
+import { colors, radii } from '../shared/theme/placeholder-theme';
 import { useJourneyStore } from '../stores/useJourneyStore';
 import { makeDemoJourney, DEMO_ROUTE, DEMO_MILESTONES, DEMO_JOURNEY_ID } from '../shared/dev/demo-journey';
 
@@ -85,12 +85,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    backgroundColor: placeholderTheme.background,
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 30,
     fontWeight: '700',
-    color: placeholderTheme.primary,
+    color: colors.primary,
   },
   subtitle: {
     marginTop: 12,
@@ -98,14 +98,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 15,
     lineHeight: 22,
-    color: placeholderTheme.mutedText,
+    color: colors.mutedText,
   },
   environment: {
     marginTop: 16,
     fontSize: 12,
     fontWeight: '600',
     letterSpacing: 0.3,
-    color: placeholderTheme.primary,
+    color: colors.primary,
     textTransform: 'uppercase',
   },
   firebaseStatus: {
@@ -116,37 +116,37 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   firebaseOk: {
-    color: placeholderTheme.accentDeep,
+    color: colors.accentDeep,
   },
   firebaseError: {
-    color: placeholderTheme.error,
+    color: colors.error,
   },
   firebasePending: {
-    color: placeholderTheme.mutedText,
+    color: colors.mutedText,
   },
   demoButton: {
     marginTop: 24,
     paddingHorizontal: 28,
     paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: placeholderTheme.primary,
+    borderRadius: radii.md,
+    backgroundColor: colors.primary,
   },
   demoButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: placeholderTheme.background,
+    color: colors.background,
   },
   signOutButton: {
     marginTop: 16,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: radii.sm,
     borderWidth: 1,
-    borderColor: placeholderTheme.border,
+    borderColor: colors.border,
   },
   signOutText: {
     fontSize: 13,
     fontWeight: '600',
-    color: placeholderTheme.text,
+    color: colors.text,
   },
 });

@@ -3,12 +3,10 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
-  ScrollView,
-  useWindowDimensions,
 } from 'react-native';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii } from '../../shared/theme/placeholder-theme';
+import { PrimaryButton } from '../../components/shared/PrimaryButton';
 
 interface OnboardingScreenProps {
   onComplete: (countryCode: string) => void;
@@ -34,7 +32,6 @@ const SLIDES = [
 ];
 
 export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.JSX.Element {
-  const { width } = useWindowDimensions();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [countryCode, setCountryCode] = useState('');
 
@@ -70,13 +67,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
             autoCapitalize="characters"
             autoCorrect={false}
           />
-          <TouchableOpacity
-            style={styles.beginButton}
-            onPress={handleComplete}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.beginButtonText}>Begin Journey</Text>
-          </TouchableOpacity>
+          <PrimaryButton label="Begin Journey" onPress={handleComplete} variant="accent" style={styles.beginButton} />
         </View>
         <View style={styles.dots}>
           {[...SLIDES, null].map((_, i) => (
@@ -100,13 +91,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
           <View key={i} style={[styles.dot, i === currentSlide && styles.dotActive]} />
         ))}
       </View>
-      <TouchableOpacity
-        style={styles.nextButton}
-        onPress={handleNext}
-        activeOpacity={0.8}
-      >
-        <Text style={styles.nextButtonText}>Next</Text>
-      </TouchableOpacity>
+      <PrimaryButton label="Next" onPress={handleNext} variant="inverse" style={styles.nextButton} />
     </View>
   );
 }
@@ -137,7 +122,7 @@ const styles = StyleSheet.create({
     marginTop: 32,
     borderWidth: 2,
     borderColor: colors.sage,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 16,
     fontSize: 24,
     fontWeight: '700',
@@ -163,27 +148,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   nextButton: {
-    backgroundColor: colors.background,
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
     marginBottom: 40,
   },
-  nextButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.text,
-  },
   beginButton: {
-    backgroundColor: colors.accentDeep,
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
     marginTop: 32,
-  },
-  beginButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: colors.background,
   },
 });

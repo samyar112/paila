@@ -159,7 +159,7 @@ export function ElevationProfile({
           cx={progressPoint.x as NumberProp}
           cy={progressPoint.y as NumberProp}
           r={PROGRESS_RADIUS}
-          fill="#D4451A"
+          fill={colors.progressMarker}
           stroke={colors.background}
           strokeWidth={2}
         />

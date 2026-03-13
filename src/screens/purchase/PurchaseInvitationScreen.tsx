@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { useJourneyStore } from '../../stores/useJourneyStore';
 import { EntitlementService } from '../../services/entitlement/EntitlementService';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii } from '../../shared/theme/placeholder-theme';
+import { PrimaryButton } from '../../components/shared/PrimaryButton';
 import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 
 interface PurchaseInvitationScreenProps {
@@ -89,23 +90,15 @@ export function PurchaseInvitationScreen({
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       {/* Purchase button */}
-      <TouchableOpacity
-        style={styles.purchaseButton}
+      <PrimaryButton
+        label="Unlock Full Trek"
+        subtitle={priceLabel}
         onPress={() => void handlePurchase()}
-        activeOpacity={0.8}
-        disabled={isPurchasing || isRestoring}
-      >
-        {isPurchasing ? (
-          <ActivityIndicator color={colors.background} />
-        ) : (
-          <>
-            <Text style={styles.purchaseButtonText}>
-              Unlock Full Trek
-            </Text>
-            <Text style={styles.priceText}>{priceLabel}</Text>
-          </>
-        )}
-      </TouchableOpacity>
+        variant="accent"
+        loading={isPurchasing}
+        disabled={isRestoring}
+        style={styles.purchaseButton}
+      />
 
       {/* Restore */}
       <TouchableOpacity
@@ -145,7 +138,7 @@ const styles = StyleSheet.create({
   },
   heroArea: {
     backgroundColor: colors.primary,
-    borderRadius: 20,
+    borderRadius: radii.xl,
     padding: 32,
     marginBottom: 28,
     alignItems: 'center',
@@ -198,21 +191,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   purchaseButton: {
-    backgroundColor: colors.accentDeep,
-    borderRadius: 14,
-    padding: 20,
-    alignItems: 'center',
     marginBottom: 12,
-  },
-  purchaseButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: colors.background,
-  },
-  priceText: {
-    fontSize: 14,
-    color: colors.sage,
-    marginTop: 4,
   },
   restoreButton: {
     padding: 16,

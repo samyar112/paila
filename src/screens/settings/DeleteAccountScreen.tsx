@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import functions from '@react-native-firebase/functions';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
 
 interface DeleteAccountScreenProps {
@@ -109,7 +109,7 @@ const styles = StyleSheet.create({
   },
   warningBox: {
     backgroundColor: colors.errorBackground,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 16,
     borderWidth: 1,
     borderColor: colors.error,
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 2,
     borderColor: colors.error,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 16,
     fontSize: 18,
     fontWeight: '700',

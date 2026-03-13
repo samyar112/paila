@@ -7,7 +7,7 @@ import {
   Modal,
 } from 'react-native';
 import { useJourneyStore, selectIsAtCheckpoint } from '../../stores/useJourneyStore';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii, typography } from '../../shared/theme/placeholder-theme';
 import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
 
@@ -102,8 +102,8 @@ const styles = StyleSheet.create({
   },
   sheet: {
     backgroundColor: colors.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: radii.pill,
+    borderTopRightRadius: radii.pill,
     padding: 24,
     paddingBottom: 40,
   },
@@ -116,8 +116,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   checkpointName: {
-    fontSize: 28,
-    fontWeight: '700',
+    ...typography.title,
     color: colors.text,
     textAlign: 'center',
     marginTop: 8,
@@ -139,13 +138,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    ...typography.heading,
     color: colors.text,
   },
   statLabel: {
-    fontSize: 11,
-    fontWeight: '500',
+    ...typography.caption,
     color: colors.mutedText,
     marginTop: 2,
     textTransform: 'uppercase',

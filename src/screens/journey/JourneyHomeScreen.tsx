@@ -16,8 +16,9 @@ import { MidnightBoundaryHandler } from '../../services/journey/MidnightBoundary
 import { JourneyProgressionService } from '../../services/journey/JourneyProgressionService';
 import { JourneyService } from '../../services/journey/JourneyService';
 import { ElevationProfile } from '../../components/journey/ElevationProfile';
+import { TrailMapView } from '../../components/journey/TrailMapView';
 import { AdBanner } from '../../components/ads/AdBanner';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii, shadows } from '../../shared/theme/placeholder-theme';
 import { EVEREST_ELEVATION_DATA } from '../../shared/everest-elevation-data';
 import { DEMO_JOURNEY_ID } from '../../shared/dev/demo-journey';
 
@@ -119,6 +120,17 @@ export function JourneyHomeScreen({
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
+      {/* Trail Map */}
+      <View style={styles.trailMapContainer}>
+        <TrailMapView
+          progressMeters={journey.progressMeters}
+          totalMeters={route.totalMeters}
+          unlockedMilestoneIds={journey.unlockedMilestoneIds}
+          width={width - 32}
+          height={200}
+        />
+      </View>
+
       {/* Elevation Profile */}
       <View style={styles.elevationContainer}>
         <ElevationProfile
@@ -472,16 +484,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.mutedText,
   },
+  trailMapContainer: {
+    marginBottom: 16,
+    borderRadius: radii.lg,
+    overflow: 'hidden' as const,
+    ...shadows.md,
+  },
   elevationContainer: {
     backgroundColor: colors.card,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: 12,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    ...shadows.md,
   },
   stateRow: {
     flexDirection: 'row',
@@ -513,14 +527,10 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 14,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    ...shadows.sm,
   },
   statValue: {
     fontSize: 22,
@@ -537,7 +547,7 @@ const styles = StyleSheet.create({
   },
   positionCard: {
     backgroundColor: colors.primary,
-    borderRadius: 16,
+    borderRadius: radii.lg,
     padding: 20,
     marginBottom: 16,
   },
@@ -556,13 +566,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: colors.card,
-    borderRadius: 12,
+    borderRadius: radii.md,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    ...shadows.sm,
   },
   streakText: {
     fontSize: 16,

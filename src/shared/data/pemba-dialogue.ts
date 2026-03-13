@@ -1,9 +1,10 @@
 import type { RouteCharacterDoc } from '../schemas';
+import { EVEREST_ROUTE_ID } from '../dev/demo-journey';
 
 export const PEMBA_ATTRIBUTION = '— Pemba Dorje Sherpa';
 
 export const PEMBA_CHARACTER: RouteCharacterDoc = {
-  routeId: 'everest-summit',
+  routeId: EVEREST_ROUTE_ID,
   characterId: 'pemba-dorje-sherpa',
   name: 'Pemba Dorje Sherpa',
   role: 'Guide',

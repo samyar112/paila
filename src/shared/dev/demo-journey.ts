@@ -1,11 +1,12 @@
 import type { JourneyDoc, RouteDoc, MilestoneDoc } from '../schemas';
 
 export const DEMO_JOURNEY_ID = 'demo-journey-001';
+export const EVEREST_ROUTE_ID = 'everest-summit';
 
 const now = new Date();
 
 export const DEMO_ROUTE: RouteDoc = {
-  slug: 'everest-summit',
+  slug: EVEREST_ROUTE_ID,
   name: 'Everest Summit & Return',
   version: 1,
   isPublished: true,
@@ -67,7 +68,7 @@ const milestonesRaw: Array<{
 ];
 
 export const DEMO_MILESTONES: MilestoneDoc[] = milestonesRaw.map((m) => ({
-  routeId: 'everest-summit',
+  routeId: EVEREST_ROUTE_ID,
   routeVersion: 1,
   index: m.index,
   nepaliTitle: m.nepali,
@@ -88,7 +89,7 @@ export function makeDemoJourney(userId: string): JourneyDoc {
   const today = new Date().toISOString().slice(0, 10);
   return {
     userId,
-    routeId: 'everest-summit',
+    routeId: EVEREST_ROUTE_ID,
     routeVersion: 1,
     status: 'active',
     journeyState: 'WALKING',

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 import { signInWithApple, signInWithGoogle } from '../services/auth/AuthService';
-import { placeholderTheme } from '../shared/theme/placeholder-theme';
+import { colors, radii } from '../shared/theme/placeholder-theme';
 
 export function AuthScreen() {
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
@@ -63,7 +63,7 @@ export function AuthScreen() {
       )}
 
       {status === 'loading' && (
-        <ActivityIndicator style={styles.spinner} color={placeholderTheme.primary} />
+        <ActivityIndicator style={styles.spinner} color={colors.primary} />
       )}
 
       {errorMessage && <Text style={styles.error}>{errorMessage}</Text>}
@@ -77,24 +77,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
-    backgroundColor: placeholderTheme.background,
+    backgroundColor: colors.background,
   },
   title: {
     fontSize: 36,
     fontWeight: '700',
-    color: placeholderTheme.primary,
+    color: colors.primary,
   },
   subtitle: {
     marginTop: 8,
     fontSize: 15,
-    color: placeholderTheme.mutedText,
+    color: colors.mutedText,
   },
   button: {
     marginTop: 20,
     width: '100%',
     maxWidth: 320,
     paddingVertical: 14,
-    borderRadius: 10,
+    borderRadius: radii.sm,
     alignItems: 'center',
   },
   appleButton: {
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   },
   error: {
     marginTop: 12,
-    color: '#b42318',
+    color: colors.error,
     textAlign: 'center',
   },
 });

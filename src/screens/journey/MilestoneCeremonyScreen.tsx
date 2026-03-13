@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useCeremonyStore } from '../../stores/useCeremonyStore';
-import { colors } from '../../shared/theme/placeholder-theme';
+import { colors, radii, typography } from '../../shared/theme/placeholder-theme';
 import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
+import { getMilestoneImage } from '../../shared/assets/milestone-images';
 
 export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   const activeCeremony = useCeremonyStore((s) => s.activeCeremony);
@@ -31,6 +32,7 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
 
   if (!activeCeremony) return null;
 
+  const milestoneImage = getMilestoneImage(activeCeremony.milestoneSlug);
   const allLinesVisible = visibleLines >= activeCeremony.dialogueLines.length;
 
   const actionLabel = activeCeremony.nextAction === 'complete'
@@ -47,8 +49,11 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   return (
     <Modal visible animationType="fade" onRequestClose={handleAction}>
       <View style={styles.container}>
-        {/* Hero Image Placeholder */}
+        {/* Hero Image */}
         <View style={styles.heroArea}>
+          {milestoneImage ? (
+            <Image source={milestoneImage} style={styles.heroImage} resizeMode="cover" />
+          ) : null}
           <View style={styles.heroOverlay}>
             <Text style={styles.altitudeBadge}>
               {activeCeremony.altitudeMeters.toLocaleString()}m
@@ -95,7 +100,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'flex-end',
   },
+  heroImage: {
+    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
+  },
   heroOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: colors.overlayLight,
+    justifyContent: 'flex-end',
     padding: 20,
     paddingBottom: 24,
   },
