@@ -1,14 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TextInput,
+  FlatList,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
-import { colors, radii } from '../../shared/theme/placeholder-theme';
+import { colors, radii, typography, shadows } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
 import { useRouteContent } from '../../shared/content/RouteContentContext';
 import { APP_STRINGS } from '../../shared/content/strings';
+import { COUNTRIES, type Country } from '../../shared/data/countries';
 
 interface OnboardingScreenProps {
   onComplete: (countryCode: string) => void;
@@ -22,9 +27,18 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
   ];
 
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [countryCode, setCountryCode] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
 
   const isLastSlide = currentSlide === SLIDES.length;
+
+  const filteredCountries = useMemo(() => {
+    if (!searchText.trim()) return COUNTRIES;
+    const query = searchText.toLowerCase();
+    return COUNTRIES.filter(
+      (c) => c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query),
+    );
+  }, [searchText]);
 
   const handleNext = (): void => {
     if (currentSlide < SLIDES.length) {
@@ -32,38 +46,89 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
     }
   };
 
+  const handleSelectCountry = useCallback((country: Country) => {
+    setSelectedCountry(country);
+    setSearchText(country.name);
+  }, []);
+
   const handleComplete = (): void => {
-    const code = countryCode.trim().toUpperCase();
-    onComplete(code.length === 2 ? code : 'US');
+    onComplete(selectedCountry?.code ?? 'US');
   };
 
+  const renderCountryItem = useCallback(({ item }: { item: Country }) => (
+    <TouchableOpacity
+      style={[
+        styles.countryItem,
+        selectedCountry?.code === item.code && styles.countryItemSelected,
+      ]}
+      onPress={() => handleSelectCountry(item)}
+      activeOpacity={0.7}
+    >
+      <Text style={[
+        styles.countryName,
+        selectedCountry?.code === item.code && styles.countryNameSelected,
+      ]}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  ), [selectedCountry, handleSelectCountry]);
+
   if (isLastSlide) {
-    // Country selection
+    const showList = searchText.length > 0 && (!selectedCountry || searchText !== selectedCountry.name);
+
     return (
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <View style={styles.slideContent}>
           <Text style={styles.title}>{routeContent.onboarding.countryPicker.title}</Text>
           <Text style={styles.subtitle}>
             {routeContent.onboarding.countryPicker.subtitle}
           </Text>
           <TextInput
-            style={styles.input}
-            value={countryCode}
-            onChangeText={setCountryCode}
+            style={styles.searchInput}
+            value={searchText}
+            onChangeText={(text) => {
+              setSearchText(text);
+              if (selectedCountry && text !== selectedCountry.name) {
+                setSelectedCountry(null);
+              }
+            }}
             placeholder={routeContent.onboarding.countryPicker.placeholder}
             placeholderTextColor={colors.sage}
-            maxLength={2}
-            autoCapitalize="characters"
             autoCorrect={false}
+            autoCapitalize="words"
           />
-          <PrimaryButton label={APP_STRINGS.onboarding.beginJourney} onPress={handleComplete} variant="accent" style={styles.beginButton} />
+          {showList && (
+            <View style={styles.dropdownContainer}>
+              <FlatList
+                data={filteredCountries}
+                keyExtractor={(item) => item.code}
+                renderItem={renderCountryItem}
+                style={styles.dropdown}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator
+              />
+            </View>
+          )}
+          {selectedCountry && (
+            <Text style={styles.selectedLabel}>{selectedCountry.name}</Text>
+          )}
+          <PrimaryButton
+            label={APP_STRINGS.onboarding.beginJourney}
+            onPress={handleComplete}
+            variant="accent"
+            disabled={!selectedCountry}
+            style={styles.beginButton}
+          />
         </View>
         <View style={styles.dots}>
           {[...SLIDES, null].map((_, i) => (
             <View key={i} style={[styles.dot, i === currentSlide && styles.dotActive]} />
           ))}
         </View>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 
@@ -107,17 +172,48 @@ const styles = StyleSheet.create({
     lineHeight: 26,
     color: colors.sage,
   },
-  input: {
-    marginTop: 32,
+  searchInput: {
+    marginTop: 24,
     borderWidth: 2,
     borderColor: colors.sage,
     borderRadius: radii.md,
-    padding: 16,
-    fontSize: 24,
-    fontWeight: '700',
+    padding: 14,
+    fontSize: 17,
+    fontWeight: '600',
     color: colors.background,
+  },
+  dropdownContainer: {
+    maxHeight: 200,
+    marginTop: 8,
+    borderRadius: radii.md,
+    backgroundColor: colors.card,
+    ...shadows.md,
+  },
+  dropdown: {
+    borderRadius: radii.md,
+  },
+  countryItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  countryItemSelected: {
+    backgroundColor: colors.accentDeep,
+  },
+  countryName: {
+    ...typography.body,
+    color: colors.text,
+  },
+  countryNameSelected: {
+    color: colors.background,
+    fontWeight: '700',
+  },
+  selectedLabel: {
+    marginTop: 12,
+    ...typography.label,
+    color: colors.sage,
     textAlign: 'center',
-    letterSpacing: 4,
   },
   dots: {
     flexDirection: 'row',

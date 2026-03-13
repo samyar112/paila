@@ -34,8 +34,8 @@ export const EVEREST_CONTENT: RouteContent = {
     ],
     countryPicker: {
       title: 'Where are you from?',
-      subtitle: 'This helps us personalize your journey. Enter your country code (e.g. US, NP, UK).',
-      placeholder: 'Country code (e.g. NP)',
+      subtitle: 'This helps us personalize your journey.',
+      placeholder: 'Search your country',
     },
   },
 

@@ -70,7 +70,7 @@ export const APP_STRINGS = {
 
   ads: {
     title: 'Ad Supports the App',
-    subtitle: 'We show a small ad to keep Paila free. It never affects your journey progress, steps, or data. Unlock the full trek to remove ads.',
+    subtitle: 'We show a small ad to keep Paila free — and it makes the full journey free for everyone in Nepal. It never affects your journey progress, steps, or data. Unlock the full trek to remove ads.',
   },
 
   permissions: {
