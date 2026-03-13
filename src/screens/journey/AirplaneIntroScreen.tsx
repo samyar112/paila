@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { colors } from '../../shared/theme/placeholder-theme';
+import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 
 interface AirplaneIntroScreenProps {
   onComplete: () => void;
@@ -50,7 +52,7 @@ export function AirplaneIntroScreen({ onComplete }: AirplaneIntroScreenProps): R
         <Text style={styles.pembaText}>
           "Welcome. The mountain has been waiting for you."
         </Text>
-        <Text style={styles.pembaName}>— Pemba Dorje Sherpa</Text>
+        <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
       </Animated.View>
 
       {/* Skip button */}
@@ -68,15 +70,15 @@ export function AirplaneIntroScreen({ onComplete }: AirplaneIntroScreenProps): R
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F2A43',
+    backgroundColor: colors.primary,
   },
   videoPlaceholder: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#0F2A43',
+    backgroundColor: colors.primary,
   },
   gradient: {
     flex: 1,
-    backgroundColor: 'rgba(15, 42, 67, 0.7)',
+    backgroundColor: 'rgba(46, 58, 46, 0.7)',
   },
   textOverlay: {
     flex: 1,
@@ -87,7 +89,7 @@ const styles = StyleSheet.create({
   routeLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#C4B89B',
+    color: colors.sage,
     letterSpacing: 3,
     marginBottom: 16,
   },
@@ -95,13 +97,13 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '600',
     fontStyle: 'italic',
-    color: '#F6F3ED',
+    color: colors.background,
     lineHeight: 36,
     marginBottom: 12,
   },
   pembaName: {
     fontSize: 14,
-    color: '#C4B89B',
+    color: colors.sage,
   },
   skipButton: {
     position: 'absolute',
@@ -115,6 +117,6 @@ const styles = StyleSheet.create({
   skipText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#F6F3ED',
+    color: colors.background,
   },
 });

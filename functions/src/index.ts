@@ -2,7 +2,7 @@ import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { beforeUserCreated as onAuthUserCreated } from 'firebase-functions/v2/identity';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
-import { onRequest } from 'firebase-functions/v2/https';
+import { onRequest, onCall, HttpsError } from 'firebase-functions/v2/https';
 
 import type {
   ContentPackDoc,
@@ -23,6 +23,7 @@ import {
   userUsageCounterPath,
 } from '../../src/shared/paths';
 import { buildUserDoc } from './user-doc';
+export { seedFirestore } from './seed-firestore';
 
 admin.initializeApp();
 
@@ -568,4 +569,50 @@ export const weatherProxy = onRequest(async (req, res) => {
   );
 
   res.status(200).json({ source: 'origin', weather: normalizedPayload });
+});
+
+export const deleteUserAccount = onCall(async (request) => {
+  const userId = request.auth?.uid;
+  if (!userId) {
+    throw new HttpsError('unauthenticated', 'Must be signed in to delete account.');
+  }
+
+  const userRef = db.collection(COLLECTIONS.users).doc(userId);
+
+  const subcollections = [
+    COLLECTIONS.stepSnapshots,
+    COLLECTIONS.journeys,
+    COLLECTIONS.entitlements,
+    COLLECTIONS.badges,
+    COLLECTIONS.events,
+    COLLECTIONS.usageCounters,
+  ];
+
+  const batch = db.batch();
+
+  for (const sub of subcollections) {
+    const snap = await userRef.collection(sub).listDocuments();
+    for (const doc of snap) {
+      // For journeys, also delete their ledger subcollection
+      if (sub === COLLECTIONS.journeys) {
+        const ledgerDocs = await doc.collection(COLLECTIONS.ledger).listDocuments();
+        for (const ledgerDoc of ledgerDocs) {
+          batch.delete(ledgerDoc);
+        }
+      }
+      batch.delete(doc);
+    }
+  }
+
+  batch.delete(userRef);
+  await batch.commit();
+
+  try {
+    await admin.auth().deleteUser(userId);
+  } catch (err) {
+    logger.error('Failed to delete Firebase Auth user', { userId, error: err });
+  }
+
+  logger.info('User account deleted', { userId });
+  return { success: true };
 });

@@ -1,4 +1,5 @@
 import { appStorage } from '../../shared/storage/app-storage';
+import { STORAGE_KEYS } from '../../shared/storage/storage-keys';
 import { getLocalDateString } from '../../utils/dates';
 
 export interface WeatherData {
@@ -15,14 +16,12 @@ interface CachedWeather {
   expiresAt: string;
 }
 
-const WEATHER_CACHE_PREFIX = 'weather:';
 const WEATHER_TTL_MS = 6 * 60 * 60 * 1000;
 const MAX_DAILY_CALLS = 4;
-const DAILY_CALL_COUNT_KEY = 'weather:daily_count';
 
 export class WeatherService {
   static getFromCache(lat: number, lon: number): WeatherData | null {
-    const key = `${WEATHER_CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
+    const key = `${STORAGE_KEYS.WEATHER_CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
     const raw = appStorage.getString(key);
     if (!raw) return null;
 
@@ -47,7 +46,7 @@ export class WeatherService {
   }
 
   static writeToCache(lat: number, lon: number, data: WeatherData): void {
-    const key = `${WEATHER_CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
+    const key = `${STORAGE_KEYS.WEATHER_CACHE_PREFIX}${lat.toFixed(2)}_${lon.toFixed(2)}`;
     const cached: CachedWeather = {
       data,
       expiresAt: new Date(Date.now() + WEATHER_TTL_MS).toISOString(),
@@ -57,13 +56,13 @@ export class WeatherService {
 
   static getDailyCallCount(): number {
     const today = getLocalDateString();
-    const raw = appStorage.getString(`${DAILY_CALL_COUNT_KEY}:${today}`);
+    const raw = appStorage.getString(`${STORAGE_KEYS.WEATHER_DAILY_COUNT_PREFIX}${today}`);
     return raw ? parseInt(raw, 10) : 0;
   }
 
   static incrementDailyCallCount(): void {
     const today = getLocalDateString();
-    const key = `${DAILY_CALL_COUNT_KEY}:${today}`;
+    const key = `${STORAGE_KEYS.WEATHER_DAILY_COUNT_PREFIX}${today}`;
     const current = this.getDailyCallCount();
     appStorage.set(key, String(current + 1));
   }

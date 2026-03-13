@@ -8,6 +8,7 @@ import { InvalidStateError } from '../../utils/errors';
 import { stepsToMeters, capAtCeiling, progressPercent } from '../../utils/meters';
 import { diffCalendarDays, getLocalDateString } from '../../utils/dates';
 import { JourneyStateMachine } from './JourneyStateMachine';
+import { isNepalLocal } from '../../utils/nepal-access';
 
 export type JourneyEvent =
   | { type: 'CHECKPOINT_ARRIVED'; milestoneId: string; milestoneIndex: number }
@@ -58,6 +59,7 @@ export class JourneyProgressionService {
     if (
       !route.isFreeRoute &&
       journey.purchaseState === 'free' &&
+      !isNepalLocal() &&
       route.paywallTriggerMeters != null &&
       newProgress >= route.paywallTriggerMeters
     ) {

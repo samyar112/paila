@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { useCeremonyStore } from '../../stores/useCeremonyStore';
+import { colors } from '../../shared/theme/placeholder-theme';
+import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
+import { PrimaryButton } from '../../components/shared/PrimaryButton';
 
 export function MilestoneCeremonyScreen(): React.JSX.Element | null {
   const activeCeremony = useCeremonyStore((s) => s.activeCeremony);
@@ -38,8 +41,7 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
 
   const handleAction = () => {
     dismissCeremony();
-    // TODO: For paywall, navigate to PurchaseInvitationScreen
-    // TODO: For complete, show completion celebration
+    // Navigation handled by RootNavigator watching useCeremonyStore.lastDismissedAction
   };
 
   return (
@@ -70,20 +72,15 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
             )}
           </View>
 
-          <Text style={styles.pembaName}>— Pemba Dorje Sherpa</Text>
+          <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
 
           {/* Action Button */}
           {allLinesVisible && (
-            <TouchableOpacity
-              style={[
-                styles.actionButton,
-                activeCeremony.nextAction === 'complete' && styles.actionButtonComplete,
-              ]}
+            <PrimaryButton
+              label={actionLabel}
               onPress={handleAction}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.actionButtonText}>{actionLabel}</Text>
-            </TouchableOpacity>
+              variant={activeCeremony.nextAction === 'complete' ? 'accent' : 'primary'}
+            />
           )}
         </ScrollView>
       </View>
@@ -92,10 +89,10 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F6F3ED' },
+  container: { flex: 1, backgroundColor: colors.background },
   heroArea: {
     height: '40%',
-    backgroundColor: '#0F2A43',
+    backgroundColor: colors.primary,
     justifyContent: 'flex-end',
   },
   heroOverlay: {
@@ -105,7 +102,7 @@ const styles = StyleSheet.create({
   altitudeBadge: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#C4B89B',
+    color: colors.sage,
     letterSpacing: 1,
   },
   contentArea: { flex: 1 },
@@ -113,52 +110,39 @@ const styles = StyleSheet.create({
   arrivedLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#8B7355',
+    color: colors.mutedText,
     letterSpacing: 2,
     marginBottom: 8,
   },
   milestoneName: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#0F2A43',
+    color: colors.text,
     marginBottom: 4,
   },
   nepaliName: {
     fontSize: 18,
     fontStyle: 'italic',
-    color: '#8B7355',
+    color: colors.mutedText,
     marginBottom: 28,
   },
   dialogueContainer: { marginBottom: 16 },
   dialogueLine: {
     fontSize: 16,
     lineHeight: 26,
-    color: '#4A6741',
+    color: colors.accentDeep,
     fontStyle: 'italic',
     marginBottom: 12,
   },
   typingIndicator: {
     fontSize: 20,
-    color: '#C4B89B',
+    color: colors.sage,
     letterSpacing: 4,
   },
   pembaName: {
     fontSize: 13,
-    color: '#8B7355',
+    color: colors.mutedText,
     marginBottom: 32,
   },
-  actionButton: {
-    backgroundColor: '#0F2A43',
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
-  },
-  actionButtonComplete: {
-    backgroundColor: '#4A6741',
-  },
-  actionButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#F6F3ED',
-  },
+
 });

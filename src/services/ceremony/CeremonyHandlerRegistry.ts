@@ -1,26 +1,16 @@
-import type { CeremonyStrategy, CeremonyContext, CeremonyPayload } from './CeremonyStrategy';
-import { StandardCeremonyStrategy } from './StandardCeremonyStrategy';
-import { PaywallCeremonyStrategy } from './PaywallCeremonyStrategy';
-import { CompletionCeremonyStrategy } from './CompletionCeremonyStrategy';
+import { buildCeremonyPayload, type CeremonyContext, type CeremonyPayload, type CeremonyType } from './CeremonyStrategy';
 
-type CeremonyType = 'standard' | 'paywall' | 'completion';
-
-const strategies: Record<CeremonyType, CeremonyStrategy> = {
-  standard: new StandardCeremonyStrategy(),
-  paywall: new PaywallCeremonyStrategy(),
-  completion: new CompletionCeremonyStrategy(),
-};
+const VALID_TYPES: Set<CeremonyType> = new Set(['standard', 'paywall', 'completion']);
 
 export class CeremonyHandlerRegistry {
   static buildCeremony(context: CeremonyContext): CeremonyPayload {
-    const strategy = strategies[context.ceremonyType];
-    if (!strategy) {
+    if (!VALID_TYPES.has(context.ceremonyType)) {
       throw new Error(`Unknown ceremony type: ${context.ceremonyType}`);
     }
-    return strategy.buildPayload(context);
+    return buildCeremonyPayload(context);
   }
 
   static hasCeremony(type: string): boolean {
-    return type in strategies;
+    return VALID_TYPES.has(type as CeremonyType);
   }
 }

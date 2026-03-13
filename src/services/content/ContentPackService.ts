@@ -1,4 +1,5 @@
 import { appStorage } from '../../shared/storage/app-storage';
+import { STORAGE_KEYS } from '../../shared/storage/storage-keys';
 import type { ContentPackDoc } from '../../shared/schemas';
 
 export type ContentPackState =
@@ -16,9 +17,6 @@ export interface ContentPackStatus {
   version: number | null;
 }
 
-const PACK_STATUS_PREFIX = 'content_pack:status:';
-const PACK_CHECKSUM_PREFIX = 'content_pack:checksum:';
-
 /**
  * Manages downloading, verifying, and extracting premium content packs.
  * Uses MMKV for persistent pack status tracking.
@@ -26,7 +24,7 @@ const PACK_CHECKSUM_PREFIX = 'content_pack:checksum:';
  */
 export class ContentPackService {
   static getStatus(packId: string): ContentPackStatus {
-    const raw = appStorage.getString(`${PACK_STATUS_PREFIX}${packId}`);
+    const raw = appStorage.getString(`${STORAGE_KEYS.CONTENT_PACK_STATUS_PREFIX}${packId}`);
     if (!raw) {
       return { state: 'idle', progress: 0, error: null, version: null };
     }
@@ -94,7 +92,7 @@ export class ContentPackService {
       onProgress?.(0.9);
 
       // Store checksum for integrity checks
-      appStorage.set(`${PACK_CHECKSUM_PREFIX}${packId}`, pack.checksumSha256);
+      appStorage.set(`${STORAGE_KEYS.CONTENT_PACK_CHECKSUM_PREFIX}${packId}`, pack.checksumSha256);
 
       // Stage 4: Ready
       const finalStatus: ContentPackStatus = {
@@ -121,14 +119,14 @@ export class ContentPackService {
 
   static verifyIntegrity(packId: string, expectedChecksum: string): boolean {
     const storedChecksum = appStorage.getString(
-      `${PACK_CHECKSUM_PREFIX}${packId}`,
+      `${STORAGE_KEYS.CONTENT_PACK_CHECKSUM_PREFIX}${packId}`,
     );
     return storedChecksum === expectedChecksum;
   }
 
   static clearPack(packId: string): void {
-    appStorage.remove(`${PACK_STATUS_PREFIX}${packId}`);
-    appStorage.remove(`${PACK_CHECKSUM_PREFIX}${packId}`);
+    appStorage.remove(`${STORAGE_KEYS.CONTENT_PACK_STATUS_PREFIX}${packId}`);
+    appStorage.remove(`${STORAGE_KEYS.CONTENT_PACK_CHECKSUM_PREFIX}${packId}`);
     // In real implementation, also delete files from filesystem
   }
 
@@ -137,7 +135,7 @@ export class ContentPackService {
     status: ContentPackStatus,
   ): void {
     appStorage.set(
-      `${PACK_STATUS_PREFIX}${packId}`,
+      `${STORAGE_KEYS.CONTENT_PACK_STATUS_PREFIX}${packId}`,
       JSON.stringify(status),
     );
   }

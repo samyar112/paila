@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useJourneyStore } from '../../stores/useJourneyStore';
 import { StepSyncService } from '../../services/step-sync/StepSyncService';
 import { MidnightBoundaryHandler } from '../../services/journey/MidnightBoundaryHandler';
@@ -16,7 +17,9 @@ import { JourneyProgressionService } from '../../services/journey/JourneyProgres
 import { JourneyService } from '../../services/journey/JourneyService';
 import { ElevationProfile } from '../../components/journey/ElevationProfile';
 import { AdBanner } from '../../components/ads/AdBanner';
+import { colors } from '../../shared/theme/placeholder-theme';
 import { EVEREST_ELEVATION_DATA } from '../../shared/everest-elevation-data';
+import { DEMO_JOURNEY_ID } from '../../shared/dev/demo-journey';
 
 interface JourneyHomeScreenProps {
   userId: string;
@@ -26,6 +29,7 @@ export function JourneyHomeScreen({
   userId,
 }: JourneyHomeScreenProps): React.JSX.Element {
   const { width } = useWindowDimensions();
+  const navigation = useNavigation();
   const [refreshing, setRefreshing] = useState(false);
   const [todaySteps, setTodaySteps] = useState(0);
 
@@ -37,7 +41,7 @@ export function JourneyHomeScreen({
   const applyForegroundSteps = useJourneyStore((s) => s.applyForegroundSteps);
   const loadJourney = useJourneyStore((s) => s.loadJourney);
 
-  const isDemo = journeyId === 'demo-journey-001';
+  const isDemo = journeyId === DEMO_JOURNEY_ID;
 
   useEffect(() => {
     if (isDemo) return;
@@ -184,6 +188,8 @@ export function JourneyHomeScreen({
           route={route}
           milestones={milestones}
           nextMilestone={nextMilestone ?? null}
+          onOpenPurchase={() => navigation.navigate('Purchase' as never)}
+          onOpenDelete={() => navigation.navigate('DeleteAccount' as never)}
         />
       )}
     </ScrollView>
@@ -197,11 +203,15 @@ function DevTestingPanel({
   route,
   milestones,
   nextMilestone,
+  onOpenPurchase,
+  onOpenDelete,
 }: {
   journey: NonNullable<ReturnType<typeof useJourneyStore.getState>['journey']>;
   route: NonNullable<ReturnType<typeof useJourneyStore.getState>['route']>;
   milestones: ReturnType<typeof useJourneyStore.getState>['milestones'];
   nextMilestone: (typeof milestones)[number] | null;
+  onOpenPurchase: () => void;
+  onOpenDelete: () => void;
 }): React.JSX.Element {
   const [stepInput, setStepInput] = useState('');
   const [lastEvent, setLastEvent] = useState('');
@@ -347,6 +357,12 @@ function DevTestingPanel({
         <TouchableOpacity style={[devStyles.quickButton, devStyles.resetButton]} onPress={handleResetToWalking}>
           <Text style={devStyles.quickText}>Reset to Walking</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={devStyles.quickButton} onPress={onOpenPurchase}>
+          <Text style={devStyles.quickText}>Open Purchase</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[devStyles.quickButton, devStyles.resetButton]} onPress={onOpenDelete}>
+          <Text style={devStyles.quickText}>Open Delete Account</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -437,7 +453,7 @@ const devStyles = StyleSheet.create({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -450,14 +466,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
   },
   loadingText: {
     fontSize: 16,
-    color: '#8B7355',
+    color: colors.mutedText,
   },
   elevationContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 16,
     padding: 12,
     marginBottom: 16,
@@ -476,16 +492,16 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#C4B89B',
+    backgroundColor: colors.sage,
     marginRight: 8,
   },
   stateDotActive: {
-    backgroundColor: '#4A6741',
+    backgroundColor: colors.accentDeep,
   },
   stateText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#0F2A43',
+    color: colors.text,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -496,7 +512,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 14,
     alignItems: 'center',
@@ -509,18 +525,18 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#0F2A43',
+    color: colors.text,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#8B7355',
+    color: colors.mutedText,
     marginTop: 4,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   positionCard: {
-    backgroundColor: '#0F2A43',
+    backgroundColor: colors.primary,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -528,18 +544,18 @@ const styles = StyleSheet.create({
   positionTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#F6F3ED',
+    color: colors.background,
   },
   positionSubtitle: {
     fontSize: 14,
-    color: '#C4B89B',
+    color: colors.sage,
     marginTop: 6,
   },
   streakRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -551,10 +567,10 @@ const styles = StyleSheet.create({
   streakText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#0F2A43',
+    color: colors.text,
   },
   streakBest: {
     fontSize: 13,
-    color: '#8B7355',
+    color: colors.mutedText,
   },
 });

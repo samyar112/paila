@@ -1,5 +1,6 @@
 import firestore from '@react-native-firebase/firestore';
 import { appStorage as storage } from '../shared/storage/app-storage';
+import { STORAGE_KEYS } from '../shared/storage/storage-keys';
 import {
   routeSchema,
   milestoneSchema,
@@ -13,14 +14,12 @@ import {
 import { type ZodSchema } from 'zod';
 import { COLLECTIONS } from '../shared/paths';
 
-const CACHE_PREFIX = 'static_content:';
-
 function cacheKey(collection: string, id: string): string {
-  return `${CACHE_PREFIX}${collection}:${id}`;
+  return `${STORAGE_KEYS.STATIC_CONTENT_PREFIX}${collection}:${id}`;
 }
 
 function cacheVersionKey(collection: string, id: string): string {
-  return `${CACHE_PREFIX}${collection}:${id}:version`;
+  return `${STORAGE_KEYS.STATIC_CONTENT_PREFIX}${collection}:${id}:version`;
 }
 
 export class StaticContentRepository {

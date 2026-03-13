@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, Text } from 'react-native';
+import { colors } from '../../shared/theme/placeholder-theme';
 import Svg, {
   Path,
   Circle,
@@ -122,8 +123,8 @@ export function ElevationProfile({
       <Svg width={width} height={height}>
         <Defs>
           <LinearGradient id="fillGrad" x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor="#4A6741" stopOpacity={0.6} />
-            <Stop offset="1" stopColor="#4A6741" stopOpacity={0.05} />
+            <Stop offset="0" stopColor={colors.accentDeep} stopOpacity={0.6} />
+            <Stop offset="1" stopColor={colors.accentDeep} stopOpacity={0.05} />
           </LinearGradient>
         </Defs>
 
@@ -133,7 +134,7 @@ export function ElevationProfile({
         {/* Elevation line */}
         <Path
           d={pathD}
-          stroke="#4A6741"
+          stroke={colors.accentDeep}
           strokeWidth={2.5}
           fill="none"
           strokeLinecap="round"
@@ -147,8 +148,8 @@ export function ElevationProfile({
             cx={p.x as NumberProp}
             cy={p.y as NumberProp}
             r={MARKER_RADIUS}
-            fill="#8B7355"
-            stroke="#F6F3ED"
+            fill={colors.mutedText}
+            stroke={colors.background}
             strokeWidth={1.5}
           />
         ))}
@@ -159,7 +160,7 @@ export function ElevationProfile({
           cy={progressPoint.y as NumberProp}
           r={PROGRESS_RADIUS}
           fill="#D4451A"
-          stroke="#F6F3ED"
+          stroke={colors.background}
           strokeWidth={2}
         />
 
@@ -169,7 +170,7 @@ export function ElevationProfile({
           y1={height - PADDING.bottom}
           x2={width - PADDING.right}
           y2={height - PADDING.bottom}
-          stroke="#C4B89B"
+          stroke={colors.sage}
           strokeWidth={0.5}
           strokeDasharray="4,4"
         />
@@ -201,7 +202,7 @@ const styles = StyleSheet.create({
   },
   altText: {
     fontSize: 9,
-    color: '#8B7355',
+    color: colors.mutedText,
     fontWeight: '600',
   },
 });

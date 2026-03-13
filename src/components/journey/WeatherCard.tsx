@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors } from '../../shared/theme/placeholder-theme';
 import type { WeatherData } from '../../services/weather/WeatherService';
 
 interface WeatherCardProps {
@@ -42,7 +43,7 @@ export function WeatherCard({ weather, isLoading }: WeatherCardProps): React.JSX
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     shadowColor: '#000',
@@ -61,12 +62,12 @@ const styles = StyleSheet.create({
   temperature: {
     fontSize: 36,
     fontWeight: '800',
-    color: '#0F2A43',
+    color: colors.text,
   },
   condition: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#8B7355',
+    color: colors.mutedText,
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -76,21 +77,21 @@ const styles = StyleSheet.create({
   locationName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0F2A43',
+    color: colors.text,
     marginBottom: 4,
   },
   wind: {
     fontSize: 13,
-    color: '#8B7355',
+    color: colors.mutedText,
   },
   loadingText: {
     fontSize: 14,
-    color: '#C4B89B',
+    color: colors.sage,
     textAlign: 'center',
   },
   unavailableText: {
     fontSize: 14,
-    color: '#C4B89B',
+    color: colors.sage,
     textAlign: 'center',
   },
 });

@@ -9,6 +9,8 @@ import {
 } from 'react-native';
 import { useJourneyStore } from '../../stores/useJourneyStore';
 import { EntitlementService } from '../../services/entitlement/EntitlementService';
+import { colors } from '../../shared/theme/placeholder-theme';
+import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
 
 interface PurchaseInvitationScreenProps {
   routeName: string;
@@ -70,7 +72,7 @@ export function PurchaseInvitationScreen({
           "This is where most people decide if the mountain is for them.
           Beyond Namche, the trail belongs to those who commit."
         </Text>
-        <Text style={styles.pembaName}>— Pemba Dorje Sherpa</Text>
+        <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
       </View>
 
       {/* What you unlock */}
@@ -94,7 +96,7 @@ export function PurchaseInvitationScreen({
         disabled={isPurchasing || isRestoring}
       >
         {isPurchasing ? (
-          <ActivityIndicator color="#F6F3ED" />
+          <ActivityIndicator color={colors.background} />
         ) : (
           <>
             <Text style={styles.purchaseButtonText}>
@@ -113,7 +115,7 @@ export function PurchaseInvitationScreen({
         activeOpacity={0.8}
       >
         {isRestoring ? (
-          <ActivityIndicator color="#8B7355" />
+          <ActivityIndicator color={colors.mutedText} />
         ) : (
           <Text style={styles.restoreText}>Restore Purchase</Text>
         )}
@@ -134,7 +136,7 @@ export function PurchaseInvitationScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
   },
   content: {
     padding: 24,
@@ -142,7 +144,7 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   heroArea: {
-    backgroundColor: '#0F2A43',
+    backgroundColor: colors.primary,
     borderRadius: 20,
     padding: 32,
     marginBottom: 28,
@@ -151,14 +153,14 @@ const styles = StyleSheet.create({
   locationLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#C4B89B',
+    color: colors.sage,
     letterSpacing: 2,
     marginBottom: 8,
   },
   altitude: {
     fontSize: 48,
     fontWeight: '800',
-    color: '#F6F3ED',
+    color: colors.background,
   },
   dialogueSection: {
     marginBottom: 28,
@@ -167,12 +169,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 26,
     fontStyle: 'italic',
-    color: '#4A6741',
+    color: colors.accentDeep,
     marginBottom: 8,
   },
   pembaName: {
     fontSize: 13,
-    color: '#8B7355',
+    color: colors.mutedText,
   },
   unlockSection: {
     marginBottom: 28,
@@ -180,23 +182,23 @@ const styles = StyleSheet.create({
   unlockTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0F2A43',
+    color: colors.text,
     marginBottom: 12,
   },
   unlockItem: {
     fontSize: 15,
     lineHeight: 28,
-    color: '#0F2A43',
+    color: colors.text,
     paddingLeft: 12,
   },
   errorText: {
     fontSize: 14,
-    color: '#b42318',
+    color: colors.error,
     textAlign: 'center',
     marginBottom: 16,
   },
   purchaseButton: {
-    backgroundColor: '#4A6741',
+    backgroundColor: colors.accentDeep,
     borderRadius: 14,
     padding: 20,
     alignItems: 'center',
@@ -205,11 +207,11 @@ const styles = StyleSheet.create({
   purchaseButtonText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#F6F3ED',
+    color: colors.background,
   },
   priceText: {
     fontSize: 14,
-    color: '#C4B89B',
+    color: colors.sage,
     marginTop: 4,
   },
   restoreButton: {
@@ -220,7 +222,7 @@ const styles = StyleSheet.create({
   restoreText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#8B7355',
+    color: colors.mutedText,
     textDecorationLine: 'underline',
   },
   dismissButton: {
@@ -229,6 +231,6 @@ const styles = StyleSheet.create({
   },
   dismissText: {
     fontSize: 14,
-    color: '#C4B89B',
+    color: colors.sage,
   },
 });

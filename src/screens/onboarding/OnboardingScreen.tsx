@@ -8,6 +8,7 @@ import {
   ScrollView,
   useWindowDimensions,
 } from 'react-native';
+import { colors } from '../../shared/theme/placeholder-theme';
 
 interface OnboardingScreenProps {
   onComplete: (countryCode: string) => void;
@@ -64,7 +65,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
             value={countryCode}
             onChangeText={setCountryCode}
             placeholder="Country code (e.g. NP)"
-            placeholderTextColor="#C4B89B"
+            placeholderTextColor={colors.sage}
             maxLength={2}
             autoCapitalize="characters"
             autoCorrect={false}
@@ -113,7 +114,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps): React.J
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F2A43',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
@@ -124,23 +125,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#F6F3ED',
+    color: colors.background,
     marginBottom: 16,
   },
   subtitle: {
     fontSize: 17,
     lineHeight: 26,
-    color: '#C4B89B',
+    color: colors.sage,
   },
   input: {
     marginTop: 32,
     borderWidth: 2,
-    borderColor: '#C4B89B',
+    borderColor: colors.sage,
     borderRadius: 12,
     padding: 16,
     fontSize: 24,
     fontWeight: '700',
-    color: '#F6F3ED',
+    color: colors.background,
     textAlign: 'center',
     letterSpacing: 4,
   },
@@ -154,15 +155,15 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#C4B89B',
+    backgroundColor: colors.sage,
     opacity: 0.4,
   },
   dotActive: {
     opacity: 1,
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
   },
   nextButton: {
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
     borderRadius: 14,
     padding: 18,
     alignItems: 'center',
@@ -171,10 +172,10 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0F2A43',
+    color: colors.text,
   },
   beginButton: {
-    backgroundColor: '#4A6741',
+    backgroundColor: colors.accentDeep,
     borderRadius: 14,
     padding: 18,
     alignItems: 'center',
@@ -183,6 +184,6 @@ const styles = StyleSheet.create({
   beginButtonText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#F6F3ED',
+    color: colors.background,
   },
 });

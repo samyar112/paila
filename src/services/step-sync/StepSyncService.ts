@@ -1,9 +1,8 @@
 import { appStorage } from '../../shared/storage/app-storage';
+import { STORAGE_KEYS } from '../../shared/storage/storage-keys';
 import { getLocalDateString } from '../../utils/dates';
 import { StepProviderFactory } from './StepProviderFactory';
 import type { StepReading } from './StepProvider';
-
-const STEP_CACHE_PREFIX = 'steps:';
 
 interface CachedStepData {
   count: number;
@@ -48,7 +47,7 @@ export class StepSyncService {
 
   static getTodayStepsFromCache(): number {
     const localDate = getLocalDateString();
-    const key = `${STEP_CACHE_PREFIX}${localDate}`;
+    const key = `${STORAGE_KEYS.STEP_CACHE_PREFIX}${localDate}`;
     const raw = appStorage.getString(key);
     if (!raw) return 0;
     try {
@@ -61,7 +60,7 @@ export class StepSyncService {
 
   private static writeToCache(reading: StepReading): void {
     const localDate = getLocalDateString();
-    const key = `${STEP_CACHE_PREFIX}${localDate}`;
+    const key = `${STORAGE_KEYS.STEP_CACHE_PREFIX}${localDate}`;
     const data: CachedStepData = {
       count: reading.steps,
       source: reading.source,
@@ -74,7 +73,7 @@ export class StepSyncService {
     const today = getLocalDateString();
     const allKeys = appStorage.getAllKeys();
     for (const key of allKeys) {
-      if (key.startsWith(STEP_CACHE_PREFIX) && !key.endsWith(today)) {
+      if (key.startsWith(STORAGE_KEYS.STEP_CACHE_PREFIX) && !key.endsWith(today)) {
         appStorage.remove(key);
       }
     }

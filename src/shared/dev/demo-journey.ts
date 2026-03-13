@@ -1,5 +1,7 @@
 import type { JourneyDoc, RouteDoc, MilestoneDoc } from '../schemas';
 
+export const DEMO_JOURNEY_ID = 'demo-journey-001';
+
 const now = new Date();
 
 export const DEMO_ROUTE: RouteDoc = {

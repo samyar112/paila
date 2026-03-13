@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { colors } from '../../shared/theme/placeholder-theme';
 import { AdService } from '../../services/ads/AdService';
 
 interface AdBannerProps {
@@ -28,15 +29,15 @@ export function AdBanner({ accessTier }: AdBannerProps): React.JSX.Element | nul
 
 const styles = StyleSheet.create({
   placeholder: {
-    backgroundColor: '#E8E4DD',
+    backgroundColor: colors.adBanner,
     paddingVertical: 12,
     alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#D0CABB',
+    borderTopColor: colors.adBannerBorder,
   },
   label: {
     fontSize: 11,
-    color: '#8B7355',
+    color: colors.mutedText,
     letterSpacing: 0.3,
   },
 });

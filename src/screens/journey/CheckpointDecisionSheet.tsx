@@ -7,6 +7,9 @@ import {
   Modal,
 } from 'react-native';
 import { useJourneyStore, selectIsAtCheckpoint } from '../../stores/useJourneyStore';
+import { colors } from '../../shared/theme/placeholder-theme';
+import { PEMBA_ATTRIBUTION } from '../../shared/data/pemba-dialogue';
+import { PrimaryButton } from '../../components/shared/PrimaryButton';
 
 interface CheckpointDecisionSheetProps {
   userId: string;
@@ -70,30 +73,21 @@ export function CheckpointDecisionSheet({
           <Text style={styles.pembaQuote}>
             "Rest well. The mountain will be here tomorrow."
           </Text>
-          <Text style={styles.pembaName}>— Pemba Dorje Sherpa</Text>
+          <Text style={styles.pembaName}>{PEMBA_ATTRIBUTION}</Text>
 
           {/* Decision buttons */}
-          <TouchableOpacity
-            style={styles.restButton}
+          <PrimaryButton
+            label="Rest here"
+            subtitle="End today. Tomorrow starts from here."
             onPress={handleRest}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.restButtonText}>Rest here</Text>
-            <Text style={styles.restButtonSub}>
-              End today. Tomorrow starts from here.
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.keepWalkingButton}
+            style={styles.restButton}
+          />
+          <PrimaryButton
+            label="Keep walking today"
+            subtitle="Continue until midnight. Open the app again to claim more steps."
             onPress={handleKeepWalking}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.keepWalkingText}>Keep walking today</Text>
-            <Text style={styles.keepWalkingSub}>
-              Continue until midnight. Open the app again to claim more steps.
-            </Text>
-          </TouchableOpacity>
+            variant="outline"
+          />
         </View>
       </View>
     </Modal>
@@ -104,10 +98,10 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(15, 42, 67, 0.5)',
+    backgroundColor: colors.overlay,
   },
   sheet: {
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -116,7 +110,7 @@ const styles = StyleSheet.create({
   arrivedLabel: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#8B7355',
+    color: colors.mutedText,
     textTransform: 'uppercase',
     letterSpacing: 1,
     textAlign: 'center',
@@ -124,13 +118,13 @@ const styles = StyleSheet.create({
   checkpointName: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#0F2A43',
+    color: colors.text,
     textAlign: 'center',
     marginTop: 8,
   },
   altitude: {
     fontSize: 15,
-    color: '#8B7355',
+    color: colors.mutedText,
     textAlign: 'center',
     marginTop: 4,
   },
@@ -147,64 +141,30 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#0F2A43',
+    color: colors.text,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#8B7355',
+    color: colors.mutedText,
     marginTop: 2,
     textTransform: 'uppercase',
   },
   pembaQuote: {
     fontSize: 15,
     fontStyle: 'italic',
-    color: '#4A6741',
+    color: colors.accentDeep,
     textAlign: 'center',
     marginBottom: 4,
     lineHeight: 22,
   },
   pembaName: {
     fontSize: 12,
-    color: '#8B7355',
+    color: colors.mutedText,
     textAlign: 'center',
     marginBottom: 24,
   },
   restButton: {
-    backgroundColor: '#0F2A43',
-    borderRadius: 14,
-    padding: 18,
     marginBottom: 12,
-  },
-  restButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#F6F3ED',
-    textAlign: 'center',
-  },
-  restButtonSub: {
-    fontSize: 13,
-    color: '#C4B89B',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  keepWalkingButton: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 1.5,
-    borderColor: '#0F2A43',
-  },
-  keepWalkingText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0F2A43',
-    textAlign: 'center',
-  },
-  keepWalkingSub: {
-    fontSize: 13,
-    color: '#8B7355',
-    textAlign: 'center',
-    marginTop: 4,
   },
 });

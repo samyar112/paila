@@ -1,4 +1,5 @@
 import { appStorage } from '../../shared/storage/app-storage';
+import { STORAGE_KEYS } from '../../shared/storage/storage-keys';
 import { getLocalDateString } from '../../utils/dates';
 
 export type NotificationTrigger = 'idle_1day' | 'idle_3days' | 'idle_7days' | 'streak_milestone' | 'morning_nudge';
@@ -9,28 +10,24 @@ export interface ScheduledNotification {
   scheduledFor: string;
 }
 
-const NOTIFICATION_OPT_OUT_KEY = 'notification:opt_out';
-const NOTIFICATION_LAST_SENT_KEY = 'notification:last_sent';
-const MAX_NOTIFICATIONS_PER_DAY = 1;
-
 export class NotificationService {
   static isOptedOut(): boolean {
-    return appStorage.getBoolean(NOTIFICATION_OPT_OUT_KEY) === true;
+    return appStorage.getBoolean(STORAGE_KEYS.NOTIFICATION_OPT_OUT) === true;
   }
 
   static setOptOut(optOut: boolean): void {
-    appStorage.set(NOTIFICATION_OPT_OUT_KEY, optOut);
+    appStorage.set(STORAGE_KEYS.NOTIFICATION_OPT_OUT, optOut);
   }
 
   static canSendToday(): boolean {
     if (this.isOptedOut()) return false;
-    const lastSent = appStorage.getString(NOTIFICATION_LAST_SENT_KEY);
+    const lastSent = appStorage.getString(STORAGE_KEYS.NOTIFICATION_LAST_SENT);
     const today = getLocalDateString();
     return lastSent !== today;
   }
 
   static markSentToday(): void {
-    appStorage.set(NOTIFICATION_LAST_SENT_KEY, getLocalDateString());
+    appStorage.set(STORAGE_KEYS.NOTIFICATION_LAST_SENT, getLocalDateString());
   }
 
   static selectNotification(

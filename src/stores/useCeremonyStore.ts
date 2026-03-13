@@ -1,14 +1,16 @@
 import { create } from 'zustand';
-import type { CeremonyPayload } from '../services/ceremony/CeremonyStrategy';
+import type { CeremonyPayload, CeremonyNextAction } from '../services/ceremony/CeremonyStrategy';
 
 interface CeremonyStoreState {
   activeCeremony: CeremonyPayload | null;
   ceremonyQueue: CeremonyPayload[];
+  lastDismissedAction: CeremonyNextAction | null;
 }
 
 interface CeremonyStoreActions {
   queueCeremony: (payload: CeremonyPayload) => void;
   dismissCeremony: () => void;
+  clearLastDismissedAction: () => void;
   reset: () => void;
 }
 
@@ -17,6 +19,7 @@ type CeremonyStore = CeremonyStoreState & CeremonyStoreActions;
 const INITIAL_STATE: CeremonyStoreState = {
   activeCeremony: null,
   ceremonyQueue: [],
+  lastDismissedAction: null,
 };
 
 export const useCeremonyStore = create<CeremonyStore>((set, get) => ({
@@ -32,14 +35,18 @@ export const useCeremonyStore = create<CeremonyStore>((set, get) => ({
   },
 
   dismissCeremony: () => {
-    const { ceremonyQueue } = get();
+    const { activeCeremony, ceremonyQueue } = get();
+    const nextAction = activeCeremony?.nextAction ?? null;
+
     if (ceremonyQueue.length === 0) {
-      set({ activeCeremony: null });
+      set({ activeCeremony: null, lastDismissedAction: nextAction });
       return;
     }
     const [next, ...rest] = ceremonyQueue;
-    set({ activeCeremony: next ?? null, ceremonyQueue: rest });
+    set({ activeCeremony: next ?? null, ceremonyQueue: rest, lastDismissedAction: nextAction });
   },
+
+  clearLastDismissedAction: () => set({ lastDismissedAction: null }),
 
   reset: () => set(INITIAL_STATE),
 }));

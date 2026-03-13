@@ -4,7 +4,7 @@ import { signOut } from '../services/auth/AuthService';
 import { getAppEnvironment, getFirebaseProjectId } from '../shared/config/app-env';
 import { placeholderTheme } from '../shared/theme/placeholder-theme';
 import { useJourneyStore } from '../stores/useJourneyStore';
-import { makeDemoJourney, DEMO_ROUTE, DEMO_MILESTONES } from '../shared/dev/demo-journey';
+import { makeDemoJourney, DEMO_ROUTE, DEMO_MILESTONES, DEMO_JOURNEY_ID } from '../shared/dev/demo-journey';
 
 export function ScaffoldShellScreen({
   firestoreCheck,
@@ -37,7 +37,7 @@ export function ScaffoldShellScreen({
   const loadDemoJourney = (): void => {
     useJourneyStore.setState({
       journey: makeDemoJourney(userId),
-      journeyId: 'demo-journey-001',
+      journeyId: DEMO_JOURNEY_ID,
       route: DEMO_ROUTE,
       milestones: DEMO_MILESTONES,
       isLoading: false,
@@ -116,10 +116,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   firebaseOk: {
-    color: '#1f7a4f',
+    color: placeholderTheme.accentDeep,
   },
   firebaseError: {
-    color: '#b42318',
+    color: placeholderTheme.error,
   },
   firebasePending: {
     color: placeholderTheme.mutedText,
@@ -129,12 +129,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#0F2A43',
+    backgroundColor: placeholderTheme.primary,
   },
   demoButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F6F3ED',
+    color: placeholderTheme.background,
   },
   signOutButton: {
     marginTop: 16,

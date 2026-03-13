@@ -5,9 +5,10 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
 } from 'react-native';
 import functions from '@react-native-firebase/functions';
+import { colors } from '../../shared/theme/placeholder-theme';
+import { PrimaryButton } from '../../components/shared/PrimaryButton';
 
 interface DeleteAccountScreenProps {
   onDeleteComplete: () => void;
@@ -66,25 +67,21 @@ export function DeleteAccountScreen({
         value={confirmText}
         onChangeText={setConfirmText}
         placeholder="Type DELETE"
-        placeholderTextColor="#C4B89B"
+        placeholderTextColor={colors.sage}
         autoCapitalize="characters"
         autoCorrect={false}
       />
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      <TouchableOpacity
-        style={[styles.deleteButton, !canDelete && styles.deleteButtonDisabled]}
+      <PrimaryButton
+        label="Delete My Account"
         onPress={() => void handleDelete()}
-        activeOpacity={0.8}
-        disabled={!canDelete || isDeleting}
-      >
-        {isDeleting ? (
-          <ActivityIndicator color="#F6F3ED" />
-        ) : (
-          <Text style={styles.deleteButtonText}>Delete My Account</Text>
-        )}
-      </TouchableOpacity>
+        variant="danger"
+        disabled={!canDelete}
+        loading={isDeleting}
+        style={styles.deleteButton}
+      />
 
       <TouchableOpacity
         style={styles.cancelButton}
@@ -100,67 +97,55 @@ export function DeleteAccountScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F6F3ED',
+    backgroundColor: colors.background,
     padding: 24,
     paddingTop: 60,
   },
   title: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#0F2A43',
+    color: colors.text,
     marginBottom: 24,
   },
   warningBox: {
-    backgroundColor: '#FFF3F0',
+    backgroundColor: colors.errorBackground,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#b42318',
+    borderColor: colors.error,
     marginBottom: 24,
   },
   warningText: {
     fontSize: 15,
     lineHeight: 24,
-    color: '#b42318',
+    color: colors.error,
   },
   instruction: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#0F2A43',
+    color: colors.text,
     marginBottom: 12,
   },
   input: {
     borderWidth: 2,
-    borderColor: '#b42318',
+    borderColor: colors.error,
     borderRadius: 12,
     padding: 16,
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F2A43',
+    color: colors.text,
     textAlign: 'center',
     letterSpacing: 4,
     marginBottom: 24,
   },
   errorText: {
     fontSize: 14,
-    color: '#b42318',
+    color: colors.error,
     textAlign: 'center',
     marginBottom: 16,
   },
   deleteButton: {
-    backgroundColor: '#b42318',
-    borderRadius: 14,
-    padding: 18,
-    alignItems: 'center',
     marginBottom: 16,
-  },
-  deleteButtonDisabled: {
-    opacity: 0.4,
-  },
-  deleteButtonText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#F6F3ED',
   },
   cancelButton: {
     padding: 16,
@@ -169,6 +154,6 @@ const styles = StyleSheet.create({
   cancelText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#8B7355',
+    color: colors.mutedText,
   },
 });

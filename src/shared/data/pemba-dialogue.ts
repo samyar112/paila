@@ -1,5 +1,7 @@
 import type { RouteCharacterDoc } from '../schemas';
 
+export const PEMBA_ATTRIBUTION = '— Pemba Dorje Sherpa';
+
 export const PEMBA_CHARACTER: RouteCharacterDoc = {
   routeId: 'everest-summit',
   characterId: 'pemba-dorje-sherpa',
