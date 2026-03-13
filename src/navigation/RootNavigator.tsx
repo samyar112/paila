@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { NavigationContainer, useNavigationContainerRef, type Theme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
@@ -28,6 +28,8 @@ type RootStackParamList = {
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+
+const NOOP = () => {};
 
 const navigationTheme: Theme = {
   dark: false,
@@ -83,6 +85,10 @@ export function RootNavigator({
     void signOut();
   }, []);
 
+  const handlePurchaseComplete = useCallback(() => {
+    void useJourneyStore.getState().loadJourney(userId);
+  }, [userId]);
+
   useEffect(() => {
     if (!lastDismissedAction) return;
     if (!navigationRef.isReady()) return;
@@ -131,10 +137,8 @@ export function RootNavigator({
                   routeName={route?.name ?? 'Everest Summit & Return'}
                   productId={route?.premiumContentPackId ?? 'everest-summit-premium'}
                   priceLabel="$4.99"
-                  onPurchaseComplete={() => {
-                    void useJourneyStore.getState().loadJourney(userId);
-                  }}
-                  onDismiss={() => {}}
+                  onPurchaseComplete={handlePurchaseComplete}
+                  onDismiss={NOOP}
                 />
               )}
             </Stack.Screen>
@@ -145,7 +149,7 @@ export function RootNavigator({
               {() => (
                 <DeleteAccountScreen
                   onDeleteComplete={handleDeleteComplete}
-                  onCancel={() => {}}
+                  onCancel={NOOP}
                 />
               )}
             </Stack.Screen>

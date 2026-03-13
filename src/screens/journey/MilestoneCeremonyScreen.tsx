@@ -70,7 +70,7 @@ export function MilestoneCeremonyScreen(): React.JSX.Element | null {
           {/* Pemba's Dialogue */}
           <View style={styles.dialogueContainer}>
             {activeCeremony.dialogueLines.slice(0, visibleLines).map((line, i) => (
-              <Text key={i} style={styles.dialogueLine}>"{line}"</Text>
+              <Text key={`${activeCeremony.milestoneSlug}-${i}`} style={styles.dialogueLine}>"{line}"</Text>
             ))}
             {!allLinesVisible && (
               <Text style={styles.typingIndicator}>...</Text>

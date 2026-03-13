@@ -33,9 +33,8 @@ export function getMilestoneImage(slug: string): ReturnType<typeof require> | nu
   return MILESTONE_IMAGES[slug as MilestoneSlug] ?? null;
 }
 
-// Satellite trail map background
-export const TRAIL_MAP_IMAGE: ReturnType<typeof require> | null =
-  require('../../../assets/images/trail-map-satellite.jpg');
+// Lazy-loaded when wired to TrailMapView. Not bundled by default (3.4MB).
+export const TRAIL_MAP_IMAGE: ReturnType<typeof require> | null = null;
 
 // Airplane intro background
 export const AIRPLANE_INTRO_IMAGE: ReturnType<typeof require> | null =

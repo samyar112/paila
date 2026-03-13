@@ -22,6 +22,14 @@ import { colors, radii, shadows } from '../../shared/theme/placeholder-theme';
 import { EVEREST_ELEVATION_DATA } from '../../shared/everest-elevation-data';
 import { DEMO_JOURNEY_ID } from '../../shared/dev/demo-journey';
 
+const stateLabel: Record<string, string> = {
+  WALKING: 'Walking',
+  PAUSED_AT_CHECKPOINT: 'At Checkpoint',
+  RESTING: 'Resting',
+  PAYWALL_FROZEN: 'Journey Paused',
+  COMPLETED: 'Journey Complete',
+};
+
 interface JourneyHomeScreenProps {
   userId: string;
 }
@@ -78,7 +86,22 @@ export function JourneyHomeScreen({
   }, [userId, journey?.journeyState, applyForegroundSteps, isDemo]);
 
   useEffect(() => {
-    void syncSteps();
+    let mounted = true;
+    const sync = async () => {
+      if (isDemo) {
+        if (mounted) setTodaySteps(12000);
+        return;
+      }
+      const reading = await StepSyncService.claimForegroundSteps();
+      const cached = StepSyncService.getTodayStepsFromCache();
+      if (mounted) setTodaySteps(cached);
+
+      if (reading && journey?.journeyState === 'WALKING') {
+        await applyForegroundSteps(userId, reading.steps);
+      }
+    };
+    void sync();
+    return () => { mounted = false; };
   }, []);
 
   const onRefresh = useCallback(async () => {
@@ -102,14 +125,6 @@ export function JourneyHomeScreen({
   const distanceToNext = nextMilestone
     ? nextMilestone.triggerMeters - journey.progressMeters
     : 0;
-
-  const stateLabel: Record<string, string> = {
-    WALKING: 'Walking',
-    PAUSED_AT_CHECKPOINT: 'At Checkpoint',
-    RESTING: 'Resting',
-    PAYWALL_FROZEN: 'Journey Paused',
-    COMPLETED: 'Journey Complete',
-  };
 
   return (
     <View style={styles.container}>

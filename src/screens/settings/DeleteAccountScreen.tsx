@@ -23,6 +23,9 @@ export function DeleteAccountScreen({
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => () => { mountedRef.current = false; }, []);
+
   const canDelete = confirmText.trim().toUpperCase() === 'DELETE';
 
   const handleDelete = async (): Promise<void> => {
@@ -42,8 +45,10 @@ export function DeleteAccountScreen({
 
       onDeleteComplete();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
-      setIsDeleting(false);
+      if (mountedRef.current) {
+        setError(err instanceof Error ? err.message : 'Failed to delete account');
+        setIsDeleting(false);
+      }
     }
   };
 

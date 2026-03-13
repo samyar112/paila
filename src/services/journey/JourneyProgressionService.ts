@@ -82,6 +82,7 @@ export class JourneyProgressionService {
       const nextCheckpoint = this.findNextCheckpoint(
         journey.progressMeters,
         sortedMilestones,
+        journey.unlockedMilestoneIds,
       );
       if (nextCheckpoint && newProgress >= nextCheckpoint.triggerMeters) {
         newProgress = capAtCeiling(newProgress, nextCheckpoint.triggerMeters);
@@ -161,9 +162,12 @@ export class JourneyProgressionService {
   private static findNextCheckpoint(
     currentMeters: number,
     sortedMilestones: MilestoneDoc[],
+    unlockedIds: string[] = [],
   ): MilestoneDoc | null {
     return (
-      sortedMilestones.find((m) => m.triggerMeters > currentMeters) ?? null
+      sortedMilestones.find(
+        (m) => m.triggerMeters > currentMeters && !unlockedIds.includes(m.titleSlug),
+      ) ?? null
     );
   }
 }

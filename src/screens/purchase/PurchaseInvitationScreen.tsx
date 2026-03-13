@@ -32,10 +32,14 @@ export function PurchaseInvitationScreen({
   const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const mountedRef = React.useRef(true);
+  React.useEffect(() => () => { mountedRef.current = false; }, []);
+
   const handlePurchase = async (): Promise<void> => {
     setIsPurchasing(true);
     setError(null);
     const result = await EntitlementService.purchase(productId);
+    if (!mountedRef.current) return;
     setIsPurchasing(false);
     if (result.ok) {
       onPurchaseComplete();
@@ -48,6 +52,7 @@ export function PurchaseInvitationScreen({
     setIsRestoring(true);
     setError(null);
     const result = await EntitlementService.restorePurchases();
+    if (!mountedRef.current) return;
     setIsRestoring(false);
     if (result.ok && result.entitlement?.status === 'active') {
       onPurchaseComplete();

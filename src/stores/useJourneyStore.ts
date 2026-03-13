@@ -161,6 +161,7 @@ export const useJourneyStore = create<JourneyStore>((set, get) => ({
       ...journey,
       journeyState: newState,
       pausedAtCheckpoint: false,
+      currentCheckpointId: null,
       keepWalkingToday: true,
       keepWalkingExpiresAt: getLocalMidnightISO(),
       updatedAt: new Date(),
