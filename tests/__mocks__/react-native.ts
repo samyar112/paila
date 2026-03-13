@@ -1,0 +1,10 @@
+export const Platform = { OS: 'ios', select: (obj: Record<string, unknown>) => obj.ios };
+export const StyleSheet = { create: <T extends Record<string, unknown>>(styles: T): T => styles };
+export const View = 'View';
+export const Text = 'Text';
+export const TouchableOpacity = 'TouchableOpacity';
+export const ScrollView = 'ScrollView';
+export const RefreshControl = 'RefreshControl';
+export const Modal = 'Modal';
+export const ActivityIndicator = 'ActivityIndicator';
+export const useWindowDimensions = () => ({ width: 375, height: 812 });

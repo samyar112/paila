@@ -431,7 +431,7 @@ export const usageCounterSchema = z.object({
 export const weatherCacheSchema = z.object({
   cacheKey: z.string().min(1),
   locationKey: z.string().min(1),
-  provider: z.literal('openweathermap'),
+  provider: z.literal('open_meteo'),
   payload: z.record(z.unknown()),
   fetchedAt: timestampLikeSchema,
   expiresAt: timestampLikeSchema,

@@ -559,7 +559,7 @@ export const weatherProxy = onRequest(async (req, res) => {
     {
       cacheKey,
       locationKey,
-      provider: 'openweathermap',
+      provider: 'open_meteo',
       payload: normalizedPayload,
       fetchedAt: now(),
       expiresAt: new Date(Date.now() + WEATHER_TTL_MS),

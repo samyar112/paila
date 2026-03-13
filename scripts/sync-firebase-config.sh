@@ -19,6 +19,7 @@ fi
 # Two iOS destinations required:
 #   ios/GoogleService-Info.plist       <- RNFB build scripts find it via SRCROOT
 #   ios/Paila/GoogleService-Info.plist <- Xcode target bundle copy
+# We use symlinks to avoid duplicate config files on disk.
 IOS_DESTINATION_SRCROOT="ios/GoogleService-Info.plist"
 IOS_DESTINATION_TARGET="ios/Paila/GoogleService-Info.plist"
 ANDROID_DESTINATION="android/app/google-services.json"
@@ -35,9 +36,10 @@ if [ ! -f "$ANDROID_SOURCE" ]; then
   exit 1
 fi
 
-cp "$IOS_SOURCE" "$IOS_DESTINATION_SRCROOT"
-cp "$IOS_SOURCE" "$IOS_DESTINATION_TARGET"
-cp "$ANDROID_SOURCE" "$ANDROID_DESTINATION"
+rm -f "$IOS_DESTINATION_SRCROOT" "$IOS_DESTINATION_TARGET" "$ANDROID_DESTINATION"
+ln -sf "$(pwd)/$IOS_SOURCE" "$IOS_DESTINATION_SRCROOT"
+ln -sf "$(pwd)/$IOS_SOURCE" "$IOS_DESTINATION_TARGET"
+ln -sf "$(pwd)/$ANDROID_SOURCE" "$ANDROID_DESTINATION"
 
 echo "Synced Firebase config for APP_ENV=$APP_ENV"
 echo "  iOS (SRCROOT) -> $IOS_DESTINATION_SRCROOT"

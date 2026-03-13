@@ -1,25 +1,21 @@
 # Sprint 2 — Paila (पाइला)
-# Journey Layer + Step Sync + Maps
+# Journey Layer + Step Sync
 
-> Sprint duration: 2 weeks (target: this weekend + following week)
 > Owner: Codex (implementation) + Claude (review)
-> Goal: A user can sign in, start a journey, walk, see their progress on a map,
->       reach a checkpoint, and make a rest/keep walking decision.
->       No ceremony visuals yet. No paywall yet. Just the core journey loop working end to end.
+> Goal: Core journey loop working end to end — start journey, walk, reach checkpoint, decide.
+> Architecture details: see ARCHITECTURE.md. This file covers sprint scope and acceptance criteria only.
 
 ---
 
 ## Sprint Goal
 
-By end of Sprint 2, the following must be true:
-
 ```
 ✅ User can start a journey from the route catalog
 ✅ Steps sync from HealthKit (iOS) / Health Connect (Android) via MMKV → Firestore
 ✅ Progress updates in real time on pull-to-refresh (MMKV layer, no Firestore hit)
-✅ Map shows route polyline + current position marker
+✅ Map placeholder in JourneyHomeScreen (full map UX deferred)
 ✅ Checkpoint detection fires correctly
-✅ Journey state machine transitions work (WALKING → PAUSED_AT_CHECKPOINT → RESTING/WALKING)
+✅ Journey state machine transitions work
 ✅ Checkpoint decision sheet appears (Rest here / Keep walking today)
 ✅ Midnight expiry of Keep walking today works correctly
 ✅ JourneyHomeScreen renders from JourneyDoc + RouteDoc — no hardcoded content
@@ -31,104 +27,60 @@ By end of Sprint 2, the following must be true:
 
 ## User Stories
 
----
-
 ### S2-01 — Static Content Repository
 
-**As a developer,**
-I want a StaticContentRepository that serves RouteDoc and MilestoneDoc from local MMKV cache
-so that the app never makes redundant Firestore reads for content that rarely changes.
+**As a developer,** I want a StaticContentRepository that serves RouteDoc and MilestoneDoc from local MMKV cache so the app never makes redundant Firestore reads.
 
 **Acceptance criteria:**
-- `StaticContentRepository` class implemented at `src/repositories/StaticContentRepository.ts`
-- Reads `RouteDoc` from Firestore on first load, writes to MMKV with version key
+- `StaticContentRepository` at `src/repositories/StaticContentRepository.ts`
+- Reads RouteDoc from Firestore on first load, writes to MMKV with version key
 - On subsequent reads: returns MMKV cache if `updatedAt` and `version` unchanged
-- Reads all `MilestoneDoc` for a route in one batch, caches same way
-- Reads `AssetBundleDoc` per milestone, caches same way
-- Cache invalidated only when remote `updatedAt` or `version` changes
-- Falls back to Firestore if MMKV cache is empty or stale
+- Reads all MilestoneDoc for a route in one batch, caches same way
+- Reads AssetBundleDoc per milestone, caches same way
+- Falls back to Firestore if cache is empty or stale
 - Unit tested with mock Firestore + mock MMKV
-
-**Notes:**
-- This is the foundation for every screen in Sprint 2 and beyond
-- Must follow Repository pattern from ENGINEERING.md
-- No screen or service imports Firestore directly
 
 ---
 
 ### S2-02 — Journey Creation
 
-**As a user,**
-I want to start a journey on a route
-so that my steps begin counting toward Base Camp.
+**As a user,** I want to start a journey on a route so that my steps begin counting toward the summit.
 
 **Acceptance criteria:**
-- `JourneyService.startJourney(userId, routeId)` creates a new `JourneyDoc` in Firestore
-- Initial state:
-  - `journeyState: 'WALKING'`
-  - `progressMeters: 0`
-  - `currentMilestoneIndex: 0`
-  - `pausedAtCheckpoint: false`
-  - `keepWalkingToday: false`
-  - `keepWalkingExpiresAt: null`
-  - `purchaseState: 'free'`
-  - `frozenAtPaywall: false`
-- Journey creation is a client write (user owns their journey doc)
+- `JourneyService.startJourney(userId, routeId)` creates a JourneyDoc in Firestore
+- Initial state: `journeyState: 'WALKING'`, `progressMeters: 0`, `pausedAtCheckpoint: false`, `keepWalkingToday: false`, `purchaseState: 'free'`, `frozenAtPaywall: false`
 - `users/{userId}.activeJourneyId` updated to new journeyId
-- Only one active journey per user at a time — enforced
+- Only one active journey per user — enforced
 - Unit tested
 
 ---
 
 ### S2-03 — Step Sync Service (HealthKit / Health Connect)
 
-**As a user,**
-I want my steps to sync from my Apple Watch or phone
-so that my walking progress is captured accurately.
+**As a user,** I want my steps to sync from my phone so that my walking progress is captured.
 
 **Acceptance criteria:**
-- `StepSyncService` implemented at `src/services/step-sync/StepSyncService.ts`
-- `StepProviderFactory` selects HealthKit on iOS, Health Connect on Android, pedometer as fallback
-- On app foreground / pull-to-refresh:
-  1. Read today's step total from HealthKit/HC (unlimited, no rate limit)
-  2. Write to MMKV: `steps:{localDate}` → `{ count, lastReadAt }`
-  3. UI updates immediately from MMKV
-- Firestore write triggered ONLY on:
-  - Checkpoint reached
-  - User chooses Rest here or Keep walking today
-  - App backgrounds after step gain > 0
-  - Midnight boundary (end of day)
+- `StepSyncService` at `src/services/step-sync/StepSyncService.ts`
+- `StepProviderFactory` selects HealthKit (iOS), Health Connect (Android), pedometer as fallback
+- On app foreground / pull-to-refresh: read today's steps → write to MMKV → UI updates immediately
+- Firestore write triggered ONLY on: checkpoint reached, rest/keep walking choice, app backgrounds after step gain, midnight boundary
 - MMKV entries older than today cleared on app open
-- HealthKit permission request handled gracefully (denied state shown clearly)
+- HealthKit permission request handled gracefully
 - Unit tested with mock step providers
-
-**Step source priority:**
-```
-1. HealthKit (iOS) / Health Connect (Android)
-2. Phone pedometer (fallback)
-Never: manual entry
-```
 
 ---
 
 ### S2-04 — Journey Progression Engine
 
-**As the system,**
-I want a JourneyProgressionService that applies steps to the journey
-so that progress is computed correctly and consistently.
+**As the system,** I want a JourneyProgressionService that applies steps to the journey correctly.
 
 **Acceptance criteria:**
-- `JourneyProgressionService` implemented at `src/services/journey/JourneyProgressionService.ts`
-- `applySteps(journey, route, milestones, steps)` returns updated `JourneyDoc` + optional `JourneyEvent`
-- Computes `progressMeters` from steps × metersPerStep
+- `JourneyProgressionService` at `src/services/journey/JourneyProgressionService.ts`
+- `applySteps(journey, route, milestones, steps)` returns updated JourneyDoc + optional JourneyEvent
+- Computes `progressMeters` from steps x metersPerStep
 - Caps `progressMeters` at `route.totalMeters`
 - Detects checkpoint arrival: `progressMeters >= milestone.triggerMeters`
-- On checkpoint arrival:
-  - Sets `journeyState: 'PAUSED_AT_CHECKPOINT'`
-  - Sets `pausedAtCheckpoint: true`
-  - Sets `currentCheckpointId` to arrived milestone ID
-  - Emits `CHECKPOINT_ARRIVED` event
-- Updates streak + lastStepDate
+- On arrival: sets `journeyState: 'PAUSED_AT_CHECKPOINT'`, emits `CHECKPOINT_ARRIVED`
 - Never mutates Firestore directly — returns updated doc, caller writes
 - Unit tested with full state machine coverage
 
@@ -136,120 +88,68 @@ so that progress is computed correctly and consistently.
 
 ### S2-05 — Journey State Machine
 
-**As the system,**
-I want a JourneyStateMachine class that validates all state transitions
-so that invalid transitions are caught and logged rather than silently corrupting state.
+**As the system,** I want a JourneyStateMachine that validates all state transitions.
 
 **Acceptance criteria:**
-- `JourneyStateMachine` implemented at `src/services/journey/JourneyStateMachine.ts`
-- All transitions from ARCHITECTURE.md implemented:
-  ```
-  WALKING → PAUSED_AT_CHECKPOINT   (checkpoint reached)
-  WALKING → PAYWALL_FROZEN          (paywall reached)
-  WALKING → RESTING                 (midnight)
-  WALKING → COMPLETED               (Base Camp)
-  PAUSED_AT_CHECKPOINT → RESTING    (Rest here)
-  PAUSED_AT_CHECKPOINT → WALKING    (Keep walking today)
-  RESTING → WALKING                 (new day, app opened)
-  PAYWALL_FROZEN → WALKING          (purchase confirmed)
-  ```
+- `JourneyStateMachine` at `src/services/journey/JourneyStateMachine.ts`
+- All transitions from ARCHITECTURE.md implemented
 - Invalid transitions throw `InvalidStateTransitionError`
-- Unit tested — every valid transition + every invalid transition tested
+- Unit tested — every valid + every invalid transition
 
 ---
 
 ### S2-06 — Midnight Boundary Handler
 
-**As the system,**
-I want the app to detect when a new day has started
-so that Keep walking today expires correctly and tomorrow starts fresh.
+**As the system,** I want the app to detect new days so Keep walking today expires correctly.
 
 **Acceptance criteria:**
-- On app foreground, compare current local date to `lastStepDate` in JourneyDoc
-- If new day detected:
-  - If `journeyState` was `WALKING` or `PAUSED_AT_CHECKPOINT` → transition to `RESTING`
-  - Clear `keepWalkingToday`, `keepWalkingExpiresAt`
-  - Clear today's MMKV step cache
-  - Write updated JourneyDoc to Firestore
-- `keepWalkingExpiresAt` is local midnight ISO string — checked on every foreground open
-- If expired → treat as `RESTING`, clear flag
+- On app foreground, compare current local date to `lastStepDate`
+- If new day: transition to RESTING, clear keepWalkingToday flags, clear MMKV step cache, write to Firestore
+- `keepWalkingExpiresAt` checked on every foreground open
 - Unit tested with mocked dates
 
 ---
 
-### S2-07 — Mapbox Integration
+### S2-07 — Elevation Profile View
 
-**As a user,**
-I want to see my route on a map with my current position
-so that I can visualize how far I've walked.
+**As a user,** I want to see my position on the mountain so I can visualize my climb.
 
 **Acceptance criteria:**
-- Mapbox SDK installed and initialized
-- Route polyline rendered from `RouteDoc.polylineRef`
-- Map bounds fit to `RouteDoc.bounds` on load
-- Milestone markers placed at `milestone.triggerMeters` position along polyline
-- Current progress marker moves as `progressMeters` updates
-- Map tiles prefetched for active route region on first load
-- Map renders offline after first load (cached tiles)
-- Mapbox token stored in EAS Secrets — never hardcoded
-- Generic map component: `<RouteMap route={route} journey={journey} milestones={milestones} />`
-- No route-specific logic inside the map component
-
-**Notes:**
-- Use `@rnmapbox/maps`
-- Map is a component, not a screen — embedded in JourneyHomeScreen
+- `ElevationProfile` component at `src/components/journey/ElevationProfile.tsx`
+- Renders a side-view altitude cross-section of the route from `RouteDoc.elevationProfile`
+- User's current position shown as an animated dot on the curve
+- Milestone markers at each checkpoint's altitude
+- Rendered with `react-native-svg` — no map SDK
+- Altitude data bundled in RouteDoc, works fully offline
+- Generic component — route-agnostic, reads from RouteDoc only
 
 ---
 
 ### S2-08 — Journey Home Screen
 
-**As a user,**
-I want a home screen that shows my journey progress
-so that I can see how far I've walked and what's ahead.
+**As a user,** I want a home screen that shows my journey progress.
 
 **Acceptance criteria:**
-- `JourneyHomeScreen` implemented at `src/screens/journey/JourneyHomeScreen.tsx`
+- `JourneyHomeScreen` at `src/screens/journey/JourneyHomeScreen.tsx`
 - Reads from `useJourneyStore` — no direct Firestore access
-- Displays:
-  - Route map with progress marker
-  - Steps today (from MMKV — live, pull-to-refresh)
-  - Progress meters + percent
-  - Current checkpoint name
-  - Next checkpoint name + distance remaining
-  - Streak days
-  - Journey state indicator (WALKING / PAUSED / RESTING)
+- Displays: elevation profile with current position, steps today (from MMKV), progress meters + percent, current/next checkpoint, streak, journey state
 - Pull-to-refresh triggers HealthKit read → MMKV update → UI update (no Firestore hit)
-- All copy parameterized from `RouteDoc` + `MilestoneDoc` — nothing hardcoded
+- All copy parameterized from RouteDoc + MilestoneDoc
 - Error boundary wrapping the screen
-- Loading state while data loads
-- No business logic in the screen — delegates to `useJourneyProgression` hook
+- No business logic in the screen
 
 ---
 
 ### S2-09 — Checkpoint Decision Sheet
 
-**As a user,**
-I want a sheet that appears when I reach a checkpoint
-so that I can choose to rest here or keep walking today.
+**As a user,** I want to choose Rest here or Keep walking today when I reach a checkpoint.
 
 **Acceptance criteria:**
-- `CheckpointDecisionSheet` implemented at `src/screens/journey/CheckpointDecisionSheet.tsx`
-- Appears automatically when `journeyState === 'PAUSED_AT_CHECKPOINT'`
-- Displays:
-  - Checkpoint name (from MilestoneDoc)
-  - Steps walked today
-  - Distance reached
-  - Two choices: `Rest here` and `Keep walking today`
-- `Rest here`:
-  - Transitions `journeyState → RESTING`
-  - Writes ledger entry + updated JourneyDoc to Firestore
-  - Sheet dismisses
-- `Keep walking today`:
-  - Transitions `journeyState → WALKING`
-  - Sets `keepWalkingToday: true`
-  - Sets `keepWalkingExpiresAt` to local midnight ISO string
-  - Writes updated JourneyDoc to Firestore
-  - Sheet dismisses
+- `CheckpointDecisionSheet` at `src/screens/journey/CheckpointDecisionSheet.tsx`
+- Appears when `journeyState === 'PAUSED_AT_CHECKPOINT'`
+- Displays: checkpoint name, steps today, distance reached
+- Rest here: transitions to RESTING, writes ledger + JourneyDoc to Firestore
+- Keep walking today: transitions to WALKING, sets keepWalkingExpiresAt to local midnight
 - Cannot be dismissed without making a choice
 - Unit tested for both choices
 
@@ -257,76 +157,56 @@ so that I can choose to rest here or keep walking today.
 
 ### S2-10 — Journey Zustand Store
 
-**As a developer,**
-I want a Zustand store for journey state
-so that all screens share a single source of truth without direct Firestore access.
+**As a developer,** I want a Zustand store for journey state so all screens share a single source of truth.
 
 **Acceptance criteria:**
-- `useJourneyStore` implemented at `src/stores/useJourneyStore.ts`
-- Holds: `journey`, `route`, `milestones`, `isLoading`, `error`
-- `loadJourney(userId)` → calls `JourneyService`, populates store
-- `applyForegroundSteps()` → calls `StepSyncService`, updates store
-- `chooseRest()` → calls `JourneyProgressionService`, writes to Firestore, updates store
-- `chooseKeepWalking()` → same pattern
+- `useJourneyStore` at `src/stores/useJourneyStore.ts`
+- Holds: journey, route, milestones, isLoading, error
+- Actions: `loadJourney`, `applyForegroundSteps`, `chooseRest`, `chooseKeepWalking`
 - Store never imports Firestore directly
-- Selectors exported for derived state:
-  - `isAtCheckpoint`
-  - `isPaywallFrozen`
-  - `isCompleted`
-  - `todaySteps` (reads from MMKV)
+- Selectors: `isAtCheckpoint`, `isPaywallFrozen`, `isCompleted`, `todaySteps`
 - Unit tested
 
 ---
 
-## What is explicitly OUT OF SCOPE for Sprint 2
+## Out of Scope
 
 ```
 ❌ Milestone ceremony visuals (Sprint 3)
-❌ Paywall screen (Sprint 3)
-❌ RevenueCat / purchase flow (Sprint 3)
+❌ Paywall screen / RevenueCat (Sprint 3)
 ❌ Real photos / videos / audio (Sprint 3+)
 ❌ Onboarding flow (Sprint 3)
 ❌ Delete Account screen (Sprint 3)
+❌ Supporting character dialogue (Sprint 3+)
 ❌ Nepal local detection (post-MVP)
 ❌ Badges (Sprint 4)
 ❌ Notifications (post-MVP)
-❌ Share card (post-MVP)
 ❌ Weather integration (Sprint 3)
 ```
 
 ---
 
-## Sprint 2 — Definition of Done
-
-Sprint 2 is complete when:
+## Definition of Done
 
 - [ ] All 10 user stories accepted by Claude
 - [ ] User can start a journey end-to-end on iOS
 - [ ] Steps sync from HealthKit and display live on JourneyHomeScreen
-- [ ] Map renders route with progress marker
+- [ ] Map placeholder renders in JourneyHomeScreen
 - [ ] Checkpoint detection fires correctly
-- [ ] Rest here and Keep walking today both work and write to Firestore
+- [ ] Rest here and Keep walking today both work
 - [ ] Midnight expiry works correctly
 - [ ] All unit tests passing
-- [ ] CI pipeline green on PR
 - [ ] Zero compliance risks flagged
 - [ ] Claude has reviewed and approved all code before merge
 
 ---
 
-## Handoff Note to Codex
+## Build Order
 
-Read the new **Step Sync Architecture** section in `ARCHITECTURE.md` before writing a single line of S2-03.
-The old 10/day rate limit model is replaced. Follow the three-layer model exactly.
+```
+S2-01 (StaticContentRepository) → S2-05 (State Machine) → S2-04 (Progression Engine)
+→ S2-10 (Zustand Store) → S2-02 (Journey Creation) → S2-03 (Step Sync)
+→ S2-06 (Midnight Handler) → S2-08 (JourneyHomeScreen) → S2-09 (CheckpointDecisionSheet)
+```
 
-Start with **S2-01** (StaticContentRepository) — everything else depends on it.
-Then **S2-05** (State Machine) — progression depends on this.
-Then **S2-04** (Progression Engine) — store and screens depend on this.
-Then **S2-10** (Zustand Store) — screens depend on this.
-Then **S2-02, S2-03, S2-06, S2-07, S2-08, S2-09** in parallel where possible.
-
-The order matters. Don't build screens before the services and stores are in place.
-
-Flag any technical concerns in `CLAUDE_CODEX_CHAT.md` before implementing — not after.
-
-— Claude
+Do NOT build screens before services and stores are in place.

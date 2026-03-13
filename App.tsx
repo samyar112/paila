@@ -11,18 +11,30 @@ import { initializeFirebase, runStartupFirestoreRead } from './src/shared/fireba
 import { verifyAppStorage } from './src/shared/storage/app-storage';
 import { placeholderTheme } from './src/shared/theme/placeholder-theme';
 
+// DEV-ONLY: set to true to skip Firebase auth and use a mock user
+const DEV_BYPASS_AUTH = __DEV__;
+
 export default function App() {
   const [isStorageReady, setIsStorageReady] = useState<boolean | null>(null);
   const [isFirebaseReady, setIsFirebaseReady] = useState<boolean | null>(null);
   const [firestoreCheck, setFirestoreCheck] = useState<
     'pending' | 'ok' | 'error' | 'skipped'
   >('pending');
-  const [authReady, setAuthReady] = useState(false);
-  const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(null);
+  const [authReady, setAuthReady] = useState(DEV_BYPASS_AUTH);
+  const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(
+    DEV_BYPASS_AUTH ? ({ uid: 'dev-user-local' } as FirebaseAuthTypes.User) : null,
+  );
   const appEnv = getAppEnvironment();
 
   useEffect(() => {
     setIsStorageReady(verifyAppStorage());
+
+    if (DEV_BYPASS_AUTH) {
+      setIsFirebaseReady(true);
+      setFirestoreCheck('skipped');
+      return;
+    }
+
     const firebaseOk = initializeFirebase();
     setIsFirebaseReady(firebaseOk);
     configureGoogleSignIn();
@@ -41,6 +53,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    if (DEV_BYPASS_AUTH) return;
+
     const unsubscribe = auth().onAuthStateChanged((user) => {
       setCurrentUser(user);
       setAuthReady(true);
@@ -75,7 +89,7 @@ export default function App() {
 
   return (
     <>
-      <RootNavigator firestoreCheck={firestoreCheck} />
+      <RootNavigator firestoreCheck={firestoreCheck} userId={currentUser.uid} />
       <StatusBar style="dark" />
     </>
   );

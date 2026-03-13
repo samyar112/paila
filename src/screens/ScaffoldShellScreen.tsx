@@ -3,11 +3,15 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { signOut } from '../services/auth/AuthService';
 import { getAppEnvironment, getFirebaseProjectId } from '../shared/config/app-env';
 import { placeholderTheme } from '../shared/theme/placeholder-theme';
+import { useJourneyStore } from '../stores/useJourneyStore';
+import { makeDemoJourney, DEMO_ROUTE, DEMO_MILESTONES } from '../shared/dev/demo-journey';
 
 export function ScaffoldShellScreen({
   firestoreCheck,
+  userId,
 }: {
   firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped';
+  userId: string;
 }) {
   const appEnv = getAppEnvironment();
   const firebaseProjectId = getFirebaseProjectId();
@@ -30,6 +34,17 @@ export function ScaffoldShellScreen({
         ? styles.firebaseOk
         : styles.firebasePending;
 
+  const loadDemoJourney = (): void => {
+    useJourneyStore.setState({
+      journey: makeDemoJourney(userId),
+      journeyId: 'demo-journey-001',
+      route: DEMO_ROUTE,
+      milestones: DEMO_MILESTONES,
+      isLoading: false,
+      error: null,
+    });
+  };
+
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Paila Scaffold</Text>
@@ -42,6 +57,17 @@ export function ScaffoldShellScreen({
         {firebaseProjectId}
       </Text>
       <Text style={[styles.firebaseStatus, firestoreStyle]}>{firestoreLabel}</Text>
+
+      {__DEV__ && (
+        <Pressable
+          accessibilityRole="button"
+          style={styles.demoButton}
+          onPress={loadDemoJourney}
+        >
+          <Text style={styles.demoButtonText}>Start Demo Journey</Text>
+        </Pressable>
+      )}
+
       <Pressable
         accessibilityRole="button"
         style={styles.signOutButton}
@@ -97,6 +123,18 @@ const styles = StyleSheet.create({
   },
   firebasePending: {
     color: placeholderTheme.mutedText,
+  },
+  demoButton: {
+    marginTop: 24,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: '#0F2A43',
+  },
+  demoButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F6F3ED',
   },
   signOutButton: {
     marginTop: 16,

@@ -3,10 +3,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StyleSheet } from 'react-native';
 
 import { ScaffoldShellScreen } from '../screens/ScaffoldShellScreen';
+import { JourneyHomeScreen } from '../screens/journey/JourneyHomeScreen';
+import { CheckpointDecisionSheet } from '../screens/journey/CheckpointDecisionSheet';
 import { placeholderTheme } from '../shared/theme/placeholder-theme';
+import { useJourneyStore } from '../stores/useJourneyStore';
 
 type RootStackParamList = {
   ScaffoldShell: { firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped' };
+  JourneyHome: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -43,9 +47,13 @@ const navigationTheme: Theme = {
 
 export function RootNavigator({
   firestoreCheck,
+  userId,
 }: {
   firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped';
+  userId: string;
 }) {
+  const journey = useJourneyStore((s) => s.journey);
+
   return (
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
@@ -55,9 +63,20 @@ export function RootNavigator({
           animation: 'fade',
         }}
       >
-        <Stack.Screen name="ScaffoldShell">
-          {() => <ScaffoldShellScreen firestoreCheck={firestoreCheck} />}
-        </Stack.Screen>
+        {journey ? (
+          <Stack.Screen name="JourneyHome">
+            {() => (
+              <>
+                <JourneyHomeScreen userId={userId} />
+                <CheckpointDecisionSheet userId={userId} />
+              </>
+            )}
+          </Stack.Screen>
+        ) : (
+          <Stack.Screen name="ScaffoldShell">
+            {() => <ScaffoldShellScreen firestoreCheck={firestoreCheck} userId={userId} />}
+          </Stack.Screen>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
