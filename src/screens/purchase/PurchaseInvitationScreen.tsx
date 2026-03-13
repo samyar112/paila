@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -8,7 +8,10 @@ import {
   ScrollView,
 } from 'react-native';
 import { useJourneyStore } from '../../stores/useJourneyStore';
-import { EntitlementService } from '../../services/entitlement/EntitlementService';
+import {
+  EntitlementService,
+  type OfferingInfo,
+} from '../../services/entitlement/EntitlementService';
 import { colors, radii } from '../../shared/theme/placeholder-theme';
 import { PrimaryButton } from '../../components/shared/PrimaryButton';
 import { useRouteContent } from '../../shared/content/RouteContentContext';
@@ -17,6 +20,7 @@ import { APP_STRINGS } from '../../shared/content/strings';
 interface PurchaseInvitationScreenProps {
   routeName: string;
   productId: string;
+  /** Fallback price label — overridden by RevenueCat offering when available. */
   priceLabel: string;
   onPurchaseComplete: () => void;
   onReturnHome: () => void;
@@ -36,13 +40,39 @@ export function PurchaseInvitationScreen({
   const [isRestoring, setIsRestoring] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Dynamic price from RevenueCat offerings (replaces hardcoded "$4.99")
+  const [dynamicPrice, setDynamicPrice] = useState<string>(priceLabel);
+  const [offeringPackageId, setOfferingPackageId] = useState<string>(productId);
+
   const mountedRef = React.useRef(true);
   React.useEffect(() => () => { mountedRef.current = false; }, []);
 
-  const handlePurchase = async (): Promise<void> => {
+  // Fetch real pricing from RevenueCat on mount
+  useEffect(() => {
+    const fetchOffering = async (): Promise<void> => {
+      try {
+        const offering: OfferingInfo =
+          await EntitlementService.getCurrentOffering();
+        if (!mountedRef.current) return;
+
+        if (offering.priceLabel) {
+          setDynamicPrice(offering.priceLabel);
+        }
+        if (offering.packageToPurchase) {
+          setOfferingPackageId(offering.packageToPurchase.identifier);
+        }
+      } catch {
+        // Non-fatal — fallback to the passed-in priceLabel
+      }
+    };
+
+    void fetchOffering();
+  }, []);
+
+  const handlePurchase = useCallback(async (): Promise<void> => {
     setIsPurchasing(true);
     setError(null);
-    const result = await EntitlementService.purchase(productId);
+    const result = await EntitlementService.purchase(offeringPackageId);
     if (!mountedRef.current) return;
     setIsPurchasing(false);
     if (result.ok) {
@@ -50,9 +80,9 @@ export function PurchaseInvitationScreen({
     } else {
       setError(result.error ?? APP_STRINGS.purchase.purchaseFailed);
     }
-  };
+  }, [offeringPackageId, onPurchaseComplete]);
 
-  const handleRestore = async (): Promise<void> => {
+  const handleRestore = useCallback(async (): Promise<void> => {
     setIsRestoring(true);
     setError(null);
     const result = await EntitlementService.restorePurchases();
@@ -63,7 +93,7 @@ export function PurchaseInvitationScreen({
     } else {
       setError(APP_STRINGS.purchase.noRestore);
     }
-  };
+  }, [onPurchaseComplete]);
 
   return (
     <ScrollView
@@ -95,10 +125,10 @@ export function PurchaseInvitationScreen({
       {/* Error */}
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* Purchase button */}
+      {/* Purchase button — price from RevenueCat offering (dynamic) */}
       <PrimaryButton
         label={APP_STRINGS.purchase.unlock}
-        subtitle={priceLabel}
+        subtitle={dynamicPrice}
         onPress={() => void handlePurchase()}
         variant="accent"
         loading={isPurchasing}

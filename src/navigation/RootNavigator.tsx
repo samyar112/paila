@@ -11,6 +11,7 @@ import { AirplaneIntroScreen } from '../screens/journey/AirplaneIntroScreen';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { PurchaseInvitationScreen } from '../screens/purchase/PurchaseInvitationScreen';
 import { DeleteAccountScreen } from '../screens/settings/DeleteAccountScreen';
+import { PermissionsScreen } from '../screens/onboarding/PermissionsScreen';
 import { colors } from '../shared/theme/placeholder-theme';
 import { useJourneyStore, selectIsPaywallFrozen } from '../stores/useJourneyStore';
 import { useCeremonyStore } from '../stores/useCeremonyStore';
@@ -22,6 +23,7 @@ import { getRouteContent, getDefaultRouteContent } from '../shared/content/route
 
 type RootStackParamList = {
   Onboarding: undefined;
+  Permissions: undefined;
   AirplaneIntro: undefined;
   ScaffoldShell: { firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped' };
   JourneyHome: undefined;
@@ -70,6 +72,9 @@ export function RootNavigator({
   const [hasOnboarded, setHasOnboarded] = useState(
     () => appStorage.getBoolean(STORAGE_KEYS.HAS_ONBOARDED) === true,
   );
+  const [permissionsCompleted, setPermissionsCompleted] = useState(
+    () => appStorage.getBoolean(STORAGE_KEYS.PERMISSIONS_COMPLETED) === true,
+  );
   const [introSeen, setIntroSeen] = useState(
     () => appStorage.getBoolean(STORAGE_KEYS.INTRO_SEEN) === true,
   );
@@ -78,6 +83,10 @@ export function RootNavigator({
     appStorage.set(STORAGE_KEYS.HAS_ONBOARDED, true);
     appStorage.set(STORAGE_KEYS.COUNTRY_CODE, countryCode);
     setHasOnboarded(true);
+  }, []);
+
+  const handlePermissionsComplete = useCallback(() => {
+    setPermissionsCompleted(true);
   }, []);
 
   const handleIntroComplete = useCallback(() => {
@@ -124,6 +133,10 @@ export function RootNavigator({
         {!hasOnboarded ? (
           <Stack.Screen name="Onboarding">
             {() => <OnboardingScreen onComplete={handleOnboardingComplete} />}
+          </Stack.Screen>
+        ) : !permissionsCompleted ? (
+          <Stack.Screen name="Permissions">
+            {() => <PermissionsScreen onComplete={handlePermissionsComplete} />}
           </Stack.Screen>
         ) : journey && !introSeen ? (
           <Stack.Screen name="AirplaneIntro">

@@ -21,6 +21,11 @@ export const STORAGE_KEYS = {
   // Country
   COUNTRY_CODE: 'app:country_code',
 
+  // Permissions
+  PERMISSIONS_COMPLETED: 'app:permissions_completed',
+  HEALTH_PERMISSION_GRANTED: 'app:health_permission_granted',
+  ATT_PERMISSION_REQUESTED: 'app:att_permission_requested',
+
   // Ads
   AD_CONSENT_SHOWN: 'ads:consent_shown',
 

@@ -11,6 +11,11 @@ module.exports = {
   moduleNameMapper: {
     '^react-native$': '<rootDir>/tests/__mocks__/react-native.ts',
     '^react-native-mmkv$': '<rootDir>/tests/__mocks__/react-native-mmkv.ts',
+    '^react-native-health$': '<rootDir>/tests/__mocks__/react-native-health.ts',
+    '^react-native-health-connect$': '<rootDir>/tests/__mocks__/react-native-health-connect.ts',
+    '^react-native-purchases$': '<rootDir>/tests/__mocks__/react-native-purchases.ts',
+    '^react-native-google-mobile-ads$': '<rootDir>/tests/__mocks__/react-native-google-mobile-ads.ts',
+    '^expo-constants$': '<rootDir>/tests/__mocks__/expo-constants.ts',
     '^@react-native-firebase/firestore$': '<rootDir>/tests/__mocks__/firebase-firestore.ts',
     '^@react-native-firebase/auth$': '<rootDir>/tests/__mocks__/firebase-auth.ts',
     '^@react-native-firebase/functions$': '<rootDir>/tests/__mocks__/firebase-functions.ts',

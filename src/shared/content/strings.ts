@@ -73,6 +73,24 @@ export const APP_STRINGS = {
     subtitle: 'We show a small ad to keep Paila free. It never affects your journey progress, steps, or data. Unlock the full trek to remove ads.',
   },
 
+  permissions: {
+    title: 'Before We Begin',
+    healthTitle: 'Step Counting',
+    healthBody: 'Paila needs access to your step count to move you along the trail. Without this, your daily walking won\'t count toward your journey.',
+    healthButton: 'Allow Step Access',
+    healthDeniedTitle: 'Steps Won\'t Count',
+    healthDeniedBody: 'Without step access, your walking won\'t advance your journey. You can enable this anytime in Settings.',
+    healthRetry: 'Try Again',
+    healthOpenSettings: 'Open Settings',
+    healthSkip: 'Continue Without Steps',
+    trackingTitle: 'Ad Personalization',
+    trackingBody: 'We show a small ad to keep Paila free. Allow tracking for relevant ads. Your health data is never used for advertising.',
+    trackingButton: 'Continue',
+    allDone: 'You\'re All Set',
+    allDoneBody: 'Your steps will carry you along the trail. Let\'s begin.',
+    startJourney: 'Start My Journey',
+  },
+
   comingSoon: {
     badge: 'COMING SOON',
     notifyMe: 'Notify Me',
