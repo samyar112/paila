@@ -1,0 +1,16 @@
+import type { CeremonyStrategy, CeremonyContext, CeremonyPayload } from './CeremonyStrategy';
+
+export class StandardCeremonyStrategy implements CeremonyStrategy {
+  buildPayload(context: CeremonyContext): CeremonyPayload {
+    return {
+      milestoneSlug: context.milestoneSlug,
+      milestoneName: context.englishTitle,
+      nepaliName: context.nepaliTitle,
+      altitudeMeters: context.triggerMeters,
+      heroImageAssetKey: `${context.assetBundleId}/image`,
+      dialogueLines: context.dialogueLines,
+      ceremonyType: 'standard',
+      nextAction: 'continue',
+    };
+  }
+}

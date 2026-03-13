@@ -129,7 +129,7 @@ Before implementing any feature, ask: *"Does this make the journey feel real?"*
 
 - Cluttered dashboards
 - Cheap gamification (XP bars, random confetti)
-- Ads inside the journey
+- Ads inside ceremonies, checkpoint decisions, or the airplane intro
 - Pushy notifications
 - Rating prompts mid-journey (only at completion in Kathmandu)
 - Manual step entry

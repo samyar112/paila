@@ -4,6 +4,7 @@ import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 import { getGoogleWebClientId } from '../../shared/config/app-env';
 import { clearAppStorage } from '../../shared/storage/app-storage';
+import { resetAllStores } from '../../stores/resetAllStores';
 
 let googleConfigured = false;
 
@@ -54,11 +55,23 @@ export async function signInWithGoogle(): Promise<FirebaseAuthTypes.UserCredenti
 }
 
 export async function signOut(): Promise<void> {
+  // Reset all Zustand stores first (sync, safe even if network down)
+  resetAllStores();
+
+  // Clear Google Sign-In session
   try {
     await GoogleSignin.signOut();
   } catch {
     // Ignore if Google Sign-In was not used.
   }
-  await auth().signOut();
+
+  // Clear all local storage
   clearAppStorage();
+
+  // Sign out from Firebase Auth last (may require network)
+  try {
+    await auth().signOut();
+  } catch {
+    // Local cleanup already done — safe to proceed even if network fails
+  }
 }

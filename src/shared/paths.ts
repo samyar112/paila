@@ -11,6 +11,7 @@ export const COLLECTIONS = {
   milestones: 'milestones',
   assetBundles: 'assetBundles',
   contentPacks: 'contentPacks',
+  characters: 'characters',
   weatherCache: 'weatherCache',
 } as const;
 
@@ -55,6 +56,9 @@ export const contentPackPath = (contentPackId: string) =>
 
 export const badgeDocPath = (badgeId: string) =>
   `${COLLECTIONS.badges}/${badgeId}`;
+
+export const routeCharacterPath = (routeId: string, characterId: string) =>
+  `${routeDocPath(routeId)}/${COLLECTIONS.characters}/${characterId}`;
 
 export const weatherCachePath = (cacheKey: string) =>
   `${COLLECTIONS.weatherCache}/${cacheKey}`;

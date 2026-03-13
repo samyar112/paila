@@ -5,13 +5,17 @@ import {
   StyleSheet,
   ScrollView,
   RefreshControl,
+  TextInput,
+  TouchableOpacity,
   useWindowDimensions,
 } from 'react-native';
 import { useJourneyStore } from '../../stores/useJourneyStore';
 import { StepSyncService } from '../../services/step-sync/StepSyncService';
 import { MidnightBoundaryHandler } from '../../services/journey/MidnightBoundaryHandler';
+import { JourneyProgressionService } from '../../services/journey/JourneyProgressionService';
 import { JourneyService } from '../../services/journey/JourneyService';
 import { ElevationProfile } from '../../components/journey/ElevationProfile';
+import { AdBanner } from '../../components/ads/AdBanner';
 import { EVEREST_ELEVATION_DATA } from '../../shared/everest-elevation-data';
 
 interface JourneyHomeScreenProps {
@@ -78,6 +82,8 @@ export function JourneyHomeScreen({
     setRefreshing(false);
   }, [syncSteps]);
 
+  const accessTier = journey?.accessTier ?? 'free';
+
   if (isLoading || !journey || !route) {
     return (
       <View style={styles.center}>
@@ -101,8 +107,9 @@ export function JourneyHomeScreen({
   };
 
   return (
+    <View style={styles.container}>
     <ScrollView
-      style={styles.container}
+      style={styles.scrollView}
       contentContainerStyle={styles.content}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -169,14 +176,271 @@ export function JourneyHomeScreen({
           Best: {journey.longestStreakDays} days
         </Text>
       </View>
+
+      {/* Dev Testing Panel */}
+      {__DEV__ && isDemo && (
+        <DevTestingPanel
+          journey={journey}
+          route={route}
+          milestones={milestones}
+          nextMilestone={nextMilestone ?? null}
+        />
+      )}
     </ScrollView>
+    <AdBanner accessTier={accessTier} />
+    </View>
   );
 }
+
+function DevTestingPanel({
+  journey,
+  route,
+  milestones,
+  nextMilestone,
+}: {
+  journey: NonNullable<ReturnType<typeof useJourneyStore.getState>['journey']>;
+  route: NonNullable<ReturnType<typeof useJourneyStore.getState>['route']>;
+  milestones: ReturnType<typeof useJourneyStore.getState>['milestones'];
+  nextMilestone: (typeof milestones)[number] | null;
+}): React.JSX.Element {
+  const [stepInput, setStepInput] = useState('');
+  const [lastEvent, setLastEvent] = useState('');
+
+  const applyDevSteps = (totalSourceSteps: number): void => {
+    const state = useJourneyStore.getState();
+    const j = state.journey;
+    if (!j || !state.route) return;
+
+    if (j.journeyState !== 'WALKING') {
+      setLastEvent(`Cannot apply steps in state: ${j.journeyState}`);
+      return;
+    }
+
+    try {
+      const { updatedJourney, events } = JourneyProgressionService.applySteps(
+        j,
+        state.route,
+        state.milestones,
+        totalSourceSteps,
+      );
+      useJourneyStore.setState({ journey: updatedJourney });
+
+      if (events.length > 0) {
+        const labels = events.map((e) => {
+          if (e.type === 'CHECKPOINT_ARRIVED') return `Checkpoint: ${e.milestoneId}`;
+          if (e.type === 'PAYWALL_REACHED') return `Paywall: ${e.milestoneId}`;
+          return 'Journey Complete!';
+        });
+        setLastEvent(labels.join(', '));
+      } else {
+        setLastEvent(`Applied. Progress: ${(updatedJourney.progressMeters / 1000).toFixed(1)}km`);
+      }
+    } catch (err) {
+      setLastEvent(err instanceof Error ? err.message : 'Error applying steps');
+    }
+  };
+
+  const handleApplyCustom = (): void => {
+    const steps = parseInt(stepInput, 10);
+    if (isNaN(steps) || steps <= 0) {
+      setLastEvent('Enter a valid step count');
+      return;
+    }
+    const totalSource = journey.lastClaimedSourceStepsToday + steps;
+    applyDevSteps(totalSource);
+    setStepInput('');
+  };
+
+  const handleJumpToNextCheckpoint = (): void => {
+    if (!nextMilestone) {
+      setLastEvent('No next milestone');
+      return;
+    }
+    const metersNeeded = nextMilestone.triggerMeters - journey.progressMeters + 1;
+    const stepsNeeded = Math.ceil(
+      (metersNeeded / route.totalMeters) * route.totalStepsCanonical,
+    );
+    applyDevSteps(journey.lastClaimedSourceStepsToday + stepsNeeded);
+  };
+
+  const handleJumpToPaywall = (): void => {
+    if (!route.paywallTriggerMeters) {
+      setLastEvent('No paywall on this route');
+      return;
+    }
+    if (journey.progressMeters >= route.paywallTriggerMeters) {
+      setLastEvent('Already past paywall');
+      return;
+    }
+    const metersNeeded = route.paywallTriggerMeters - journey.progressMeters + 1;
+    const stepsNeeded = Math.ceil(
+      (metersNeeded / route.totalMeters) * route.totalStepsCanonical,
+    );
+    applyDevSteps(journey.lastClaimedSourceStepsToday + stepsNeeded);
+  };
+
+  const handleJumpToEnd = (): void => {
+    const metersNeeded = route.totalMeters - journey.progressMeters + 1;
+    const stepsNeeded = Math.ceil(
+      (metersNeeded / route.totalMeters) * route.totalStepsCanonical,
+    );
+    applyDevSteps(journey.lastClaimedSourceStepsToday + stepsNeeded);
+  };
+
+  const handleResetToWalking = (): void => {
+    useJourneyStore.setState({
+      journey: {
+        ...journey,
+        journeyState: 'WALKING',
+        pausedAtCheckpoint: false,
+        currentCheckpointId: null,
+        keepWalkingToday: false,
+        keepWalkingExpiresAt: null,
+        frozenAtPaywall: false,
+        freezeReason: null,
+        updatedAt: new Date(),
+      },
+    });
+    setLastEvent('Reset to WALKING state');
+  };
+
+  return (
+    <View style={devStyles.container}>
+      <Text style={devStyles.title}>DEV TESTING PANEL</Text>
+      <Text style={devStyles.info}>
+        State: {journey.journeyState} | Progress: {(journey.progressMeters / 1000).toFixed(1)}km |
+        Claimed Today: {journey.lastClaimedSourceStepsToday}
+      </Text>
+      {nextMilestone && (
+        <Text style={devStyles.info}>
+          Next: {nextMilestone.englishTitle} at {(nextMilestone.triggerMeters / 1000).toFixed(1)}km
+          ({Math.ceil(((nextMilestone.triggerMeters - journey.progressMeters) / route.totalMeters) * route.totalStepsCanonical)} steps away)
+        </Text>
+      )}
+
+      {lastEvent !== '' && <Text style={devStyles.event}>{lastEvent}</Text>}
+
+      <View style={devStyles.inputRow}>
+        <TextInput
+          style={devStyles.input}
+          value={stepInput}
+          onChangeText={setStepInput}
+          placeholder="Steps to add"
+          placeholderTextColor="#999"
+          keyboardType="number-pad"
+        />
+        <TouchableOpacity style={devStyles.applyButton} onPress={handleApplyCustom}>
+          <Text style={devStyles.applyText}>Apply</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={devStyles.buttonGrid}>
+        <TouchableOpacity style={devStyles.quickButton} onPress={handleJumpToNextCheckpoint}>
+          <Text style={devStyles.quickText}>Next Checkpoint</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={devStyles.quickButton} onPress={handleJumpToPaywall}>
+          <Text style={devStyles.quickText}>Jump to Paywall</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={devStyles.quickButton} onPress={handleJumpToEnd}>
+          <Text style={devStyles.quickText}>Complete Journey</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[devStyles.quickButton, devStyles.resetButton]} onPress={handleResetToWalking}>
+          <Text style={devStyles.quickText}>Reset to Walking</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+const devStyles = StyleSheet.create({
+  container: {
+    marginTop: 24,
+    backgroundColor: '#1a1a2e',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 2,
+    borderColor: '#e94560',
+    borderStyle: 'dashed',
+  },
+  title: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#e94560',
+    letterSpacing: 2,
+    marginBottom: 8,
+  },
+  info: {
+    fontSize: 11,
+    color: '#a0a0b0',
+    fontFamily: 'Courier',
+    marginBottom: 4,
+  },
+  event: {
+    fontSize: 12,
+    color: '#00ff88',
+    fontFamily: 'Courier',
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  inputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 12,
+    marginBottom: 12,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#2a2a3e',
+    borderRadius: 8,
+    padding: 10,
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Courier',
+  },
+  applyButton: {
+    backgroundColor: '#e94560',
+    borderRadius: 8,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  applyText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  buttonGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  quickButton: {
+    backgroundColor: '#2a2a3e',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexGrow: 1,
+    minWidth: '45%',
+  },
+  resetButton: {
+    backgroundColor: '#4a2a2e',
+  },
+  quickText: {
+    color: '#e0e0ff',
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F6F3ED',
+  },
+  scrollView: {
+    flex: 1,
   },
   content: {
     padding: 16,

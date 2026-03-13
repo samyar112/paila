@@ -1,10 +1,16 @@
 import firestore from '@react-native-firebase/firestore';
 import { appStorage as storage } from '../shared/storage/app-storage';
-import type {
-  RouteDoc,
-  MilestoneDoc,
-  AssetBundleDoc,
+import {
+  routeSchema,
+  milestoneSchema,
+  assetBundleSchema,
+  routeCharacterSchema,
+  type RouteDoc,
+  type MilestoneDoc,
+  type AssetBundleDoc,
+  type RouteCharacterDoc,
 } from '../shared/schemas';
+import { type ZodSchema } from 'zod';
 import { COLLECTIONS } from '../shared/paths';
 
 const CACHE_PREFIX = 'static_content:';
@@ -19,7 +25,7 @@ function cacheVersionKey(collection: string, id: string): string {
 
 export class StaticContentRepository {
   static async getRoute(routeId: string): Promise<RouteDoc | null> {
-    const cached = this.readCache<RouteDoc>(COLLECTIONS.routes, routeId);
+    const cached = this.readCacheValidated(COLLECTIONS.routes, routeId, routeSchema);
     if (cached) return cached;
 
     const snap = await firestore()
@@ -28,9 +34,10 @@ export class StaticContentRepository {
       .get();
     if (!snap.exists) return null;
 
-    const data = snap.data() as RouteDoc;
-    this.writeCache(COLLECTIONS.routes, routeId, data);
-    return data;
+    const parsed = routeSchema.safeParse(snap.data());
+    if (!parsed.success) return null;
+    this.writeCache(COLLECTIONS.routes, routeId, parsed.data);
+    return parsed.data;
   }
 
   static async getMilestones(routeId: string): Promise<MilestoneDoc[]> {
@@ -45,7 +52,11 @@ export class StaticContentRepository {
       .orderBy('index', 'asc')
       .get();
 
-    const milestones = snap.docs.map((doc) => doc.data() as MilestoneDoc);
+    const milestones: MilestoneDoc[] = [];
+    for (const doc of snap.docs) {
+      const parsed = milestoneSchema.safeParse(doc.data());
+      if (parsed.success) milestones.push(parsed.data);
+    }
     this.writeCache(COLLECTIONS.milestones, cacheId, milestones);
     return milestones;
   }
@@ -53,9 +64,10 @@ export class StaticContentRepository {
   static async getAssetBundle(
     assetBundleId: string,
   ): Promise<AssetBundleDoc | null> {
-    const cached = this.readCache<AssetBundleDoc>(
+    const cached = this.readCacheValidated(
       COLLECTIONS.assetBundles,
       assetBundleId,
+      assetBundleSchema,
     );
     if (cached) return cached;
 
@@ -65,9 +77,36 @@ export class StaticContentRepository {
       .get();
     if (!snap.exists) return null;
 
-    const data = snap.data() as AssetBundleDoc;
-    this.writeCache(COLLECTIONS.assetBundles, assetBundleId, data);
-    return data;
+    const parsed = assetBundleSchema.safeParse(snap.data());
+    if (!parsed.success) return null;
+    this.writeCache(COLLECTIONS.assetBundles, assetBundleId, parsed.data);
+    return parsed.data;
+  }
+
+  static async getCharacter(
+    routeId: string,
+    characterId: string,
+  ): Promise<RouteCharacterDoc | null> {
+    const cacheId = `${routeId}_${characterId}`;
+    const cached = this.readCacheValidated(
+      COLLECTIONS.characters,
+      cacheId,
+      routeCharacterSchema,
+    );
+    if (cached) return cached;
+
+    const snap = await firestore()
+      .collection(COLLECTIONS.routes)
+      .doc(routeId)
+      .collection(COLLECTIONS.characters)
+      .doc(characterId)
+      .get();
+    if (!snap.exists) return null;
+
+    const parsed = routeCharacterSchema.safeParse(snap.data());
+    if (!parsed.success) return null;
+    this.writeCache(COLLECTIONS.characters, cacheId, parsed.data);
+    return parsed.data;
   }
 
   static invalidateRoute(routeId: string): void {
@@ -85,6 +124,25 @@ export class StaticContentRepository {
     if (!raw) return null;
     try {
       return JSON.parse(raw) as T;
+    } catch {
+      storage.remove(key);
+      return null;
+    }
+  }
+
+  private static readCacheValidated<S extends ZodSchema>(
+    collection: string,
+    id: string,
+    schema: S,
+  ): ReturnType<S['parse']> | null {
+    const key = cacheKey(collection, id);
+    const raw = storage.getString(key);
+    if (!raw) return null;
+    try {
+      const parsed = schema.safeParse(JSON.parse(raw));
+      if (parsed.success) return parsed.data;
+      storage.remove(key);
+      return null;
     } catch {
       storage.remove(key);
       return null;

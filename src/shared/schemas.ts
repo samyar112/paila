@@ -360,6 +360,27 @@ export const contentPackSchema = z.object({
 });
 
 // ─────────────────────────────────────────────
+// Route Character
+// ─────────────────────────────────────────────
+
+export const routeCharacterSchema = z.object({
+  routeId: z.string().min(1),
+  characterId: z.string().min(1),
+  name: z.string().min(1),
+  role: z.string().min(1),
+  description: z.string().min(1),
+  milestoneDialogue: z.record(z.array(z.string().min(1))),
+  keepWalkingLines: z.array(z.string().min(1)),
+  restLines: z.array(z.string().min(1)),
+  notifications: z.array(z.object({
+    trigger: z.enum(['idle_1day', 'idle_3days', 'idle_7days', 'streak_milestone', 'morning_nudge']),
+    copy: z.string().min(1),
+  })),
+  createdAt: timestampLikeSchema,
+  updatedAt: timestampLikeSchema,
+});
+
+// ─────────────────────────────────────────────
 // Badges
 // ─────────────────────────────────────────────
 
@@ -452,6 +473,7 @@ export type JourneyLedgerDoc = z.infer<typeof journeyLedgerSchema>;
 export type EntitlementDoc = z.infer<typeof entitlementSchema>;
 export type AssetBundleDoc = z.infer<typeof assetBundleSchema>;
 export type ContentPackDoc = z.infer<typeof contentPackSchema>;
+export type RouteCharacterDoc = z.infer<typeof routeCharacterSchema>;
 export type BadgeDoc = z.infer<typeof badgeSchema>;
 export type UserBadgeDoc = z.infer<typeof userBadgeSchema>;
 export type UserEventDoc = z.infer<typeof userEventSchema>;
