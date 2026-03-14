@@ -11,6 +11,7 @@ import { AirplaneIntroScreen } from '../screens/journey/AirplaneIntroScreen';
 import { OnboardingScreen } from '../screens/onboarding/OnboardingScreen';
 import { PurchaseInvitationScreen } from '../screens/purchase/PurchaseInvitationScreen';
 import { DeleteAccountScreen } from '../screens/settings/DeleteAccountScreen';
+import { SettingsScreen } from '../screens/settings/SettingsScreen';
 import { PermissionsScreen } from '../screens/onboarding/PermissionsScreen';
 import { colors } from '../shared/theme/placeholder-theme';
 import { useJourneyStore, selectIsPaywallFrozen } from '../stores/useJourneyStore';
@@ -27,6 +28,7 @@ type RootStackParamList = {
   AirplaneIntro: undefined;
   ScaffoldShell: { firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped' };
   JourneyHome: undefined;
+  Settings: undefined;
   Purchase: undefined;
   DeleteAccount: undefined;
 };
@@ -152,6 +154,12 @@ export function RootNavigator({
                   <MilestoneCeremonyScreen />
                 </>
               )}
+            </Stack.Screen>
+            <Stack.Screen
+              name="Settings"
+              options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+            >
+              {() => <SettingsScreen />}
             </Stack.Screen>
             <Stack.Screen
               name="Purchase"

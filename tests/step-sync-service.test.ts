@@ -142,6 +142,11 @@ describe('StepSyncService', () => {
       appStorage.set(`steps:${today}`, 'not-json{{{');
       expect(StepSyncService.getTodayStepsFromCache()).toBe(0);
     });
+
+    it('supports dev mock source step storage', () => {
+      StepSyncService.setDevMockSourceSteps(4321);
+      expect(StepSyncService.getDevMockSourceSteps()).toBe(4321);
+    });
   });
 
   describe('requestPermissions', () => {
@@ -202,6 +207,17 @@ describe('StepSyncService', () => {
 
       // Today's key gets overwritten by the new reading, not deleted
       expect(appStorage.getString(todayKey)).toBeDefined();
+    });
+
+    it('clears stale mock source step entries from previous days', async () => {
+      appStorage.set('steps_mock:2025-01-01', 1000);
+
+      const provider = makeProvider();
+      jest.spyOn(StepProviderFactory, 'create').mockReturnValue([provider]);
+
+      await StepSyncService.claimForegroundSteps();
+
+      expect(appStorage.getNumber('steps_mock:2025-01-01')).toBeUndefined();
     });
   });
 });

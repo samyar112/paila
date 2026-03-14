@@ -1,4 +1,11 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getFirestore,
+  setDoc,
+  writeBatch,
+} from '@react-native-firebase/firestore';
 import { COLLECTIONS } from '../../shared/paths';
 
 const ROUTE_ID = 'everest-summit';
@@ -46,17 +53,17 @@ const returnMilestones: MilestoneSeed[] = [
 
 export class ClientSeedService {
   static async seedRouteIfNeeded(): Promise<boolean> {
-    const db = firestore();
-    const routeRef = db.collection(COLLECTIONS.routes).doc(ROUTE_ID);
-    const snap = await routeRef.get();
+    const db = getFirestore();
+    const routeRef = doc(collection(db, COLLECTIONS.routes), ROUTE_ID);
+    const snap = await getDoc(routeRef);
 
-    const exists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+    const exists = snap.exists();
     if (exists) return false;
 
     const now = new Date();
     const milestoneSlugs = milestones.map((m) => m.slug);
 
-    await routeRef.set({
+    await setDoc(routeRef, {
       slug: ROUTE_ID,
       name: 'Everest Summit & Return',
       version: 1,
@@ -89,7 +96,7 @@ export class ClientSeedService {
       updatedAt: now,
     });
 
-    const batch = db.batch();
+    const batch = writeBatch(db);
     const allMilestones = [...milestones, ...returnMilestones];
 
     for (const m of allMilestones) {
@@ -98,7 +105,10 @@ export class ClientSeedService {
         : Math.round((m.triggerMeters / 19000) * 27941);
 
       batch.set(
-        db.collection(COLLECTIONS.routes).doc(ROUTE_ID).collection(COLLECTIONS.milestones).doc(m.slug),
+        doc(
+          collection(doc(collection(db, COLLECTIONS.routes), ROUTE_ID), COLLECTIONS.milestones),
+          m.slug,
+        ),
         {
           routeId: ROUTE_ID,
           routeVersion: 1,
@@ -127,20 +137,20 @@ export class ClientSeedService {
   }
 
   static async ensureUserDoc(user: { uid: string; email?: string | null; displayName?: string | null }): Promise<void> {
-    const db = firestore();
-    const userRef = db.collection(COLLECTIONS.users).doc(user.uid);
-    const snap = await userRef.get();
+    const db = getFirestore();
+    const userRef = doc(collection(db, COLLECTIONS.users), user.uid);
+    const snap = await getDoc(userRef);
 
-    const exists = typeof snap.exists === 'function' ? snap.exists() : snap.exists;
+    const exists = snap.exists();
     if (exists) return;
 
     const now = new Date();
-    await userRef.set({
+    await setDoc(userRef, {
       authUid: user.uid,
-      email: user.email ?? undefined,
-      displayName: user.displayName ?? undefined,
+      email: user.email ?? null,
+      displayName: user.displayName ?? null,
       timezone: null,
-      countryCode: undefined,
+      countryCode: null,
       accessTier: 'standard_free',
       isNepalLocalEligible: false,
       createdAt: now,

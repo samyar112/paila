@@ -15,7 +15,9 @@ interface PermissionsScreenProps {
 async function requestHealthPermission(): Promise<boolean> {
   try {
     if (Platform.OS === 'ios') {
-      const AppleHealthKit = require('react-native-health').default;
+      const mod = require('react-native-health');
+      const AppleHealthKit = mod.default ?? mod;
+      if (!AppleHealthKit?.initHealthKit) return false;
       return new Promise<boolean>((resolve) => {
         AppleHealthKit.initHealthKit(
           { permissions: { read: [AppleHealthKit.Constants.Permissions.StepCount], write: [] } },

@@ -52,7 +52,13 @@ export function ScaffoldShellScreen({
     setStarting(true);
     setStartError(null);
     try {
-      await useJourneyStore.getState().startJourney(userId, EVEREST_ROUTE_ID, 1);
+      const store = useJourneyStore.getState();
+      await store.startJourney(userId, EVEREST_ROUTE_ID, 1);
+
+      const state = useJourneyStore.getState();
+      if (!state.journey) {
+        setStartError(state.error ?? 'Failed to start journey');
+      }
     } catch (e) {
       setStartError(e instanceof Error ? e.message : 'Failed to start journey');
     } finally {

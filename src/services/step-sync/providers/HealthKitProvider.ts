@@ -8,28 +8,41 @@
 // your journey along the trail."
 
 import { Platform } from 'react-native';
-import AppleHealthKit, {
-  HealthKitPermissions,
-  HealthInputOptions,
-} from 'react-native-health';
 import type { StepProvider, StepReading } from '../StepProvider';
 
-const HEALTHKIT_PERMISSIONS: HealthKitPermissions = {
-  permissions: {
-    read: [AppleHealthKit.Constants.Permissions.StepCount],
-    write: [],
-  },
-};
+// Lazy-load react-native-health to avoid crash on simulator where the native module is unavailable
+function getAppleHealthKit() {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const mod = require('react-native-health');
+    return mod.default ?? mod;
+  } catch {
+    return null;
+  }
+}
+
+function getHealthKitPermissions() {
+  const AHK = getAppleHealthKit();
+  if (!AHK) return null;
+  return {
+    permissions: {
+      read: [AHK.Constants.Permissions.StepCount],
+      write: [],
+    },
+  };
+}
 
 export class HealthKitProvider implements StepProvider {
   private permissionGranted = false;
 
   async isAvailable(): Promise<boolean> {
     if (Platform.OS !== 'ios') return false;
+    const AHK = getAppleHealthKit();
+    if (!AHK) return false;
 
     return new Promise<boolean>((resolve) => {
       try {
-        AppleHealthKit.isAvailable((err, available) => {
+        AHK.isAvailable((err: unknown, available: boolean) => {
           if (err) {
             resolve(false);
             return;
@@ -46,9 +59,13 @@ export class HealthKitProvider implements StepProvider {
     const available = await this.isAvailable();
     if (!available) return false;
 
+    const AHK = getAppleHealthKit();
+    const perms = getHealthKitPermissions();
+    if (!AHK || !perms) return false;
+
     return new Promise<boolean>((resolve) => {
       try {
-        AppleHealthKit.initHealthKit(HEALTHKIT_PERMISSIONS, (err) => {
+        AHK.initHealthKit(perms, (err: unknown) => {
           if (err) {
             this.permissionGranted = false;
             resolve(false);
@@ -68,26 +85,26 @@ export class HealthKitProvider implements StepProvider {
     const available = await this.isAvailable();
     if (!available) return null;
 
-    // Ensure permissions are initialized before reading
     if (!this.permissionGranted) {
       const granted = await this.requestPermission();
       if (!granted) return null;
     }
 
-    const now = new Date();
-    const startOfDay = new Date(now);
-    startOfDay.setHours(0, 0, 0, 0);
+    const AHK = getAppleHealthKit();
+    if (!AHK) return null;
 
-    const options: HealthInputOptions = {
+    const now = new Date();
+
+    const options = {
       date: now.toISOString(),
       includeManuallyAdded: false,
     };
 
     return new Promise<StepReading | null>((resolve) => {
       try {
-        AppleHealthKit.getStepCount(
+        AHK.getStepCount(
           options,
-          (err, results) => {
+          (err: unknown, results: { value: number } | null) => {
             if (err || !results) {
               resolve(null);
               return;

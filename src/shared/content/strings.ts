@@ -98,4 +98,23 @@ export const APP_STRINGS = {
     region: 'Region',
     guide: 'Your Guide',
   },
+
+  settings: {
+    title: 'Settings',
+    accountSection: 'Account',
+    email: 'Email',
+    signOut: 'Sign Out',
+    preferencesSection: 'Preferences',
+    country: 'Country',
+    selectCountry: 'Select Country',
+    supportSection: 'Support',
+    privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+    restorePurchases: 'Restore Purchases',
+    restoreSuccess: 'Purchases restored successfully.',
+    restoreFailed: 'Could not restore purchases.',
+    dangerSection: 'Danger Zone',
+    deleteAccount: 'Delete My Account',
+    version: 'Version',
+  },
 } as const;

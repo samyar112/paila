@@ -1,4 +1,11 @@
-import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {
+  AppleAuthProvider,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithCredential,
+  signOut as firebaseSignOut,
+  type FirebaseAuthTypes,
+} from '@react-native-firebase/auth';
 import { appleAuth } from '@invertase/react-native-apple-authentication';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
@@ -30,12 +37,12 @@ export async function signInWithApple(): Promise<FirebaseAuthTypes.UserCredentia
     throw new Error('Apple sign-in failed to return identity token.');
   }
 
-  const credential = auth.AppleAuthProvider.credential(
+  const credential = AppleAuthProvider.credential(
     request.identityToken,
     request.nonce,
   );
 
-  return auth().signInWithCredential(credential);
+  return signInWithCredential(getAuth(), credential);
 }
 
 export async function signInWithGoogle(): Promise<FirebaseAuthTypes.UserCredential> {
@@ -50,8 +57,8 @@ export async function signInWithGoogle(): Promise<FirebaseAuthTypes.UserCredenti
     throw new Error('Google sign-in failed to return id token.');
   }
 
-  const credential = auth.GoogleAuthProvider.credential(idToken);
-  return auth().signInWithCredential(credential);
+  const credential = GoogleAuthProvider.credential(idToken);
+  return signInWithCredential(getAuth(), credential);
 }
 
 export async function signOut(): Promise<void> {
@@ -70,7 +77,7 @@ export async function signOut(): Promise<void> {
 
   // Sign out from Firebase Auth last (may require network)
   try {
-    await auth().signOut();
+    await firebaseSignOut(getAuth());
   } catch {
     // Local cleanup already done — safe to proceed even if network fails
   }

@@ -1,7 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
+import {
+  getAuth,
+  onAuthStateChanged,
+  type FirebaseAuthTypes,
+} from '@react-native-firebase/auth';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AuthScreen } from './src/screens/AuthScreen';
@@ -27,6 +31,10 @@ export default function App() {
   const [authReady, setAuthReady] = useState(DEV_BYPASS_AUTH);
   const [currentUser, setCurrentUser] = useState<FirebaseAuthTypes.User | null>(
     DEV_BYPASS_AUTH ? ({ uid: 'dev-user-local' } as FirebaseAuthTypes.User) : null,
+  );
+  const [seedReady, setSeedReady] = useState(DEV_BYPASS_AUTH);
+  const [namasteShown, setNamasteShown] = useState(
+    () => appStorage.getBoolean(STORAGE_KEYS.NAMASTE_SEEN) === true,
   );
   const appEnv = getAppEnvironment();
 
@@ -59,13 +67,32 @@ export default function App() {
   useEffect(() => {
     if (DEV_BYPASS_AUTH) return;
 
-    const unsubscribe = auth().onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
       setCurrentUser(user);
       setAuthReady(true);
     });
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    if (!currentUser || DEV_BYPASS_AUTH) return;
+    let mounted = true;
+    (async () => {
+      try {
+        await ClientSeedService.ensureUserDoc({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        });
+        await ClientSeedService.seedRouteIfNeeded();
+      } catch (e) {
+        console.warn('[App] Seed/UserDoc error:', e);
+      }
+      if (mounted) setSeedReady(true);
+    })();
+    return () => { mounted = false; };
+  }, [currentUser]);
 
   if (isStorageReady !== true || isFirebaseReady !== true || !authReady) {
     return (
@@ -86,31 +113,6 @@ export default function App() {
       </View>
     );
   }
-
-  // Seed route data + ensure UserDoc after auth
-  const [seedReady, setSeedReady] = useState(DEV_BYPASS_AUTH);
-  useEffect(() => {
-    if (!currentUser || DEV_BYPASS_AUTH) return;
-    let mounted = true;
-    (async () => {
-      try {
-        await ClientSeedService.ensureUserDoc({
-          uid: currentUser.uid,
-          email: currentUser.email,
-          displayName: currentUser.displayName,
-        });
-        await ClientSeedService.seedRouteIfNeeded();
-      } catch (e) {
-        console.warn('[App] Seed/UserDoc error:', e);
-      }
-      if (mounted) setSeedReady(true);
-    })();
-    return () => { mounted = false; };
-  }, [currentUser]);
-
-  const [namasteShown, setNamasteShown] = useState(
-    () => appStorage.getBoolean(STORAGE_KEYS.NAMASTE_SEEN) === true,
-  );
 
   if (!namasteShown) {
     return (

@@ -1,4 +1,12 @@
-import firestore from '@react-native-firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  getFirestore,
+  orderBy,
+  query,
+} from '@react-native-firebase/firestore';
 import { appStorage as storage } from '../shared/storage/app-storage';
 import { STORAGE_KEYS } from '../shared/storage/storage-keys';
 import {
@@ -27,10 +35,8 @@ export class StaticContentRepository {
     const cached = this.readCacheValidated(COLLECTIONS.routes, routeId, routeSchema);
     if (cached) return cached;
 
-    const snap = await firestore()
-      .collection(COLLECTIONS.routes)
-      .doc(routeId)
-      .get();
+    const db = getFirestore();
+    const snap = await getDoc(doc(collection(db, COLLECTIONS.routes), routeId));
     if (!snap.exists) return null;
 
     const parsed = routeSchema.safeParse(snap.data());
@@ -44,12 +50,12 @@ export class StaticContentRepository {
     const cached = this.readCache<MilestoneDoc[]>(COLLECTIONS.milestones, cacheId);
     if (cached) return cached;
 
-    const snap = await firestore()
-      .collection(COLLECTIONS.routes)
-      .doc(routeId)
-      .collection(COLLECTIONS.milestones)
-      .orderBy('index', 'asc')
-      .get();
+    const db = getFirestore();
+    const milestonesRef = collection(
+      doc(collection(db, COLLECTIONS.routes), routeId),
+      COLLECTIONS.milestones,
+    );
+    const snap = await getDocs(query(milestonesRef, orderBy('index', 'asc')));
 
     const milestones: MilestoneDoc[] = [];
     for (const doc of snap.docs) {
@@ -70,10 +76,8 @@ export class StaticContentRepository {
     );
     if (cached) return cached;
 
-    const snap = await firestore()
-      .collection(COLLECTIONS.assetBundles)
-      .doc(assetBundleId)
-      .get();
+    const db = getFirestore();
+    const snap = await getDoc(doc(collection(db, COLLECTIONS.assetBundles), assetBundleId));
     if (!snap.exists) return null;
 
     const parsed = assetBundleSchema.safeParse(snap.data());
@@ -94,12 +98,12 @@ export class StaticContentRepository {
     );
     if (cached) return cached;
 
-    const snap = await firestore()
-      .collection(COLLECTIONS.routes)
-      .doc(routeId)
-      .collection(COLLECTIONS.characters)
-      .doc(characterId)
-      .get();
+    const db = getFirestore();
+    const charactersRef = collection(
+      doc(collection(db, COLLECTIONS.routes), routeId),
+      COLLECTIONS.characters,
+    );
+    const snap = await getDoc(doc(charactersRef, characterId));
     if (!snap.exists) return null;
 
     const parsed = routeCharacterSchema.safeParse(snap.data());

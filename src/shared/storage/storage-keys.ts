@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
 
   // Step sync (date-keyed: `${PREFIX}${YYYY-MM-DD}`)
   STEP_CACHE_PREFIX: 'steps:',
+  STEP_MOCK_SOURCE_PREFIX: 'steps_mock:',
 
   // Content packs
   CONTENT_PACK_STATUS_PREFIX: 'content_pack:status:',

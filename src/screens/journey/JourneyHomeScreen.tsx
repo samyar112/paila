@@ -121,6 +121,15 @@ export function JourneyHomeScreen({
     ? nextMilestone.triggerMeters - journey.progressMeters
     : 0;
 
+  const handleOpenSettings = useCallback(() => {
+    navigation.navigate('Settings' as never);
+  }, [navigation]);
+
+  const handleResetRealJourney = useCallback(async () => {
+    await JourneyService.resetActiveJourneyForDev(userId);
+    await useJourneyStore.getState().loadJourney(userId);
+  }, [userId]);
+
   return (
     <View style={styles.container}>
     <ScrollView
@@ -130,6 +139,16 @@ export function JourneyHomeScreen({
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
+      {/* Settings Gear */}
+      <TouchableOpacity
+        style={styles.settingsButton}
+        onPress={handleOpenSettings}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <Text style={styles.settingsIcon}>⚙</Text>
+      </TouchableOpacity>
+
       {/* Trail Map */}
       <View style={styles.trailMapContainer}>
         <TrailMapView
@@ -219,6 +238,8 @@ export function JourneyHomeScreen({
           nextMilestone={nextMilestone ?? null}
           onOpenPurchase={() => navigation.navigate('Purchase' as never)}
           onOpenDelete={() => navigation.navigate('DeleteAccount' as never)}
+          onSyncSteps={syncSteps}
+          onResetRealJourney={handleResetRealJourney}
         />
       )}
     </ScrollView>
@@ -236,6 +257,8 @@ function DevTestingPanel({
   nextMilestone,
   onOpenPurchase,
   onOpenDelete,
+  onSyncSteps,
+  onResetRealJourney,
 }: {
   journey: NonNullable<ReturnType<typeof useJourneyStore.getState>['journey']>;
   journeyId: string | null;
@@ -245,9 +268,14 @@ function DevTestingPanel({
   nextMilestone: (typeof milestones)[number] | null;
   onOpenPurchase: () => void;
   onOpenDelete: () => void;
+  onSyncSteps: () => Promise<void>;
+  onResetRealJourney: () => Promise<void>;
 }): React.JSX.Element {
   const [stepInput, setStepInput] = useState('');
   const [lastEvent, setLastEvent] = useState('');
+  const [mockSourceSteps, setMockSourceSteps] = useState(
+    StepSyncService.getDevMockSourceSteps(),
+  );
 
   const applyDevSteps = (totalSourceSteps: number): void => {
     const state = useJourneyStore.getState();
@@ -352,6 +380,21 @@ function DevTestingPanel({
     setLastEvent('Reset to WALKING state');
   };
 
+  const handleAddMockSource = async (increment: number): Promise<void> => {
+    const next = mockSourceSteps + increment;
+    StepSyncService.setDevMockSourceSteps(next);
+    setMockSourceSteps(next);
+    await onSyncSteps();
+    setLastEvent(`Mock source set to ${next} total steps`);
+  };
+
+  const handleResetMockSource = async (): Promise<void> => {
+    StepSyncService.setDevMockSourceSteps(0);
+    setMockSourceSteps(0);
+    await onSyncSteps();
+    setLastEvent('Mock source reset to 0');
+  };
+
   return (
     <View style={devStyles.container}>
       <Text style={devStyles.title}>DEV TESTING PANEL</Text>
@@ -359,6 +402,7 @@ function DevTestingPanel({
         State: {journey.journeyState} | Progress: {(journey.progressMeters / 1000).toFixed(1)}km |
         Claimed Today: {journey.lastClaimedSourceStepsToday}
       </Text>
+      <Text style={devStyles.info}>Mock Source Today: {mockSourceSteps}</Text>
       {nextMilestone && (
         <Text style={devStyles.info}>
           Next: {nextMilestone.englishTitle} at {(nextMilestone.triggerMeters / 1000).toFixed(1)}km
@@ -386,6 +430,15 @@ function DevTestingPanel({
         <TouchableOpacity style={devStyles.quickButton} onPress={handleJumpToNextCheckpoint}>
           <Text style={devStyles.quickText}>Next Checkpoint</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={devStyles.quickButton} onPress={() => void handleAddMockSource(1000)}>
+          <Text style={devStyles.quickText}>Mock +1,000 Steps</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={devStyles.quickButton} onPress={() => void handleAddMockSource(5000)}>
+          <Text style={devStyles.quickText}>Mock +5,000 Steps</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[devStyles.quickButton, devStyles.resetButton]} onPress={() => void handleResetMockSource()}>
+          <Text style={devStyles.quickText}>Reset Mock Source</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={devStyles.quickButton} onPress={handleJumpToPaywall}>
           <Text style={devStyles.quickText}>Jump to Paywall</Text>
         </TouchableOpacity>
@@ -401,6 +454,14 @@ function DevTestingPanel({
         <TouchableOpacity style={[devStyles.quickButton, devStyles.resetButton]} onPress={onOpenDelete}>
           <Text style={devStyles.quickText}>Open Delete Account</Text>
         </TouchableOpacity>
+        {journeyId !== DEMO_JOURNEY_ID && (
+          <TouchableOpacity
+            style={[devStyles.quickButton, devStyles.resetButton]}
+            onPress={() => void onResetRealJourney()}
+          >
+            <Text style={devStyles.quickText}>Reset Real Journey (dev)</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -499,6 +560,14 @@ const styles = StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 40,
+  },
+  settingsButton: {
+    alignSelf: 'flex-end',
+    marginBottom: 8,
+  },
+  settingsIcon: {
+    fontSize: 24,
+    color: colors.mutedText,
   },
   center: {
     flex: 1,

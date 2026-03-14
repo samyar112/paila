@@ -10,6 +10,10 @@ interface CachedStepData {
   lastReadAt: string;
 }
 
+function isDevMode(): boolean {
+  return typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
+}
+
 export class StepSyncService {
   static async claimForegroundSteps(): Promise<StepReading | null> {
     this.clearStaleCache();
@@ -58,6 +62,21 @@ export class StepSyncService {
     }
   }
 
+  static setDevMockSourceSteps(totalSourceSteps: number): void {
+    if (!isDevMode()) return;
+    const localDate = getLocalDateString();
+    const key = `${STORAGE_KEYS.STEP_MOCK_SOURCE_PREFIX}${localDate}`;
+    const sanitized = Math.max(0, Math.floor(totalSourceSteps));
+    appStorage.set(key, sanitized);
+  }
+
+  static getDevMockSourceSteps(): number {
+    if (!isDevMode()) return 0;
+    const localDate = getLocalDateString();
+    const key = `${STORAGE_KEYS.STEP_MOCK_SOURCE_PREFIX}${localDate}`;
+    return appStorage.getNumber(key) ?? 0;
+  }
+
   private static writeToCache(reading: StepReading): void {
     const localDate = getLocalDateString();
     const key = `${STORAGE_KEYS.STEP_CACHE_PREFIX}${localDate}`;
@@ -73,7 +92,11 @@ export class StepSyncService {
     const today = getLocalDateString();
     const allKeys = appStorage.getAllKeys();
     for (const key of allKeys) {
-      if (key.startsWith(STORAGE_KEYS.STEP_CACHE_PREFIX) && !key.endsWith(today)) {
+      if (
+        (key.startsWith(STORAGE_KEYS.STEP_CACHE_PREFIX)
+          || key.startsWith(STORAGE_KEYS.STEP_MOCK_SOURCE_PREFIX))
+        && !key.endsWith(today)
+      ) {
         appStorage.remove(key);
       }
     }
