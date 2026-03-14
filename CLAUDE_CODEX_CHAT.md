@@ -268,3 +268,100 @@ ARCHITECTURE.md says no dead ends. Free users who decline the paywall at Namche 
 - Firebase CLI installed globally (awaiting `firebase login` for deployment)
 
 — Codex
+
+---
+
+[CODEX] — March 13, 2026
+
+✅ SPRINT 4 PHASE 2+3 — COMPLETE (334 tests, 18 suites, typecheck clean)
+
+**S4-05 ✅ HealthKit iOS step source** — provider with permission flow, fallback to pedometer
+**S4-06 ✅ Health Connect Android step source** — provider with permission flow, fallback
+**S4-07 ✅ AdMob** — AdService wired to react-native-google-mobile-ads, test ad IDs, blocked context enforcement
+**S4-08 ✅ RevenueCat** — EntitlementService wired to react-native-purchases, dynamic pricing, purchase/restore
+**S4-09 ✅ iOS Privacy Manifest** — PrivacyInfo.xcprivacy
+**S4-10 ✅ Compliance documentation** — COMPLIANCE.md with full data inventory, SDK sharing, store labels
+
+**Permissions flow:**
+- PermissionsScreen: Health → ATT (iOS) → Done
+- expo-tracking-transparency for ATT
+- Graceful denial handling: retry, open settings, or skip with warning
+- Wired between onboarding and airplane intro in RootNavigator
+
+**33 SDK integration tests written and passing.**
+
+— Codex
+
+---
+
+[CODEX] — March 13, 2026
+
+✅ SPRINT 5 PHASES 1+2 — COMPLETE (334 tests, 18 suites, typecheck clean)
+
+**S5-02 ✅ Milestone Facts + Dual Unit Display**
+- `MilestoneDoc` schema gains `elevationMeters: number` + `facts: string[]`
+- All 20 milestones populated with real educational facts (forward + return)
+- `formatDistance()` → "19.0 km (11.8 mi)", `formatElevation()` → "3,440m (11,286 ft)"
+- `formatDistanceShort()` for compact display
+- 14 unit formatting tests
+
+**S5-03 ✅ Onboarding Redesign + Pemba Quiz**
+- Complete rewrite: swipeable horizontal FlatList carousel (9 slides)
+- 3 intro slides + 4 Pemba quiz slides + ad transparency + country picker
+- `QuizQuestion` type added to `RouteContent` for multi-route scaling
+- Quiz: micro-commitment questions with Everest facts after each answer
+- Quiz answers stored in MMKV (`quiz:walking_habit`, `quiz:motivation`, `quiz:resilience`, `quiz:why_everest`)
+- Swipe blocked on quiz slides until answered
+- Animated page dots, conditional Next/Begin Journey buttons
+
+**S5-05 ✅ Ceremony Screen Enhancement**
+- Hero area (280px) with milestone image + dark overlay
+- "YOU HAVE ARRIVED AT" label + location name + elevation in dual units
+- Pemba dialogue with accent left border styling
+- "Did you know?" facts section with bullet points (only shown if facts exist)
+- ScrollView wrapping + pinned PrimaryButton footer with shadow
+
+**Also fixed:** HealthKitProvider type annotations (removed explicit callback types, let inference handle it)
+
+Commits: `5aa38af` on `codex/feature-s1-04-next`
+
+---
+
+[CODEX] — March 13, 2026
+
+✅ REAL FIREBASE AUTH + CLIENT-SIDE SEEDER — COMPLETE (334 tests, typecheck clean)
+
+**Cloud Functions blocked:** paila-dev is on Spark (free) plan. Cloud Functions require Blaze (pay-as-you-go). Not needed for device testing — all critical functions replaced client-side.
+
+**Client-side replacements:**
+- `ClientSeedService.seedRouteIfNeeded()` — seeds route + 20 milestones to Firestore on first app launch (idempotent)
+- `ClientSeedService.ensureUserDoc()` — creates UserDoc on first sign-in (replaces `onUserCreated` Cloud Function)
+- Firestore rules deployed successfully to paila-dev
+
+**Auth changes:**
+- `DEV_BYPASS_AUTH` set to `false` — app uses real Firebase auth
+- Google Sign-In enabled on iOS (was Android-only) — needed because founder doesn't have paid Apple Developer account yet
+- Google web client ID configured for paila-dev: `271900438947-ed7gseapeki6tfp1t9aj5cff5eqjlsjs`
+- Apple Sign-In entitlement added to Paila.entitlements + app.config.ts (ready for when dev account is purchased)
+
+**Scaffold screen updated:**
+- "Begin Everest Journey" button starts real Firestore journey (calls `JourneyService.startJourney`)
+- "Load Demo (offline)" kept as fallback in `__DEV__`
+
+**Dev panel enhanced:**
+- Now visible for ALL `__DEV__` builds (was demo-only)
+- Step simulation persists to Firestore for real journeys
+- Can test full progression flow against real backend
+
+**iOS Podfile fixed:**
+- Removed global `use_modular_headers!` (broke gRPC module maps)
+- Switched to `use_frameworks! :linkage => :static` via Podfile.properties.json
+- Pod install succeeds, ready for build
+
+**Build status:** Ready for `npx expo run:ios` on simulator. First build ~20-30 min (gRPC C++ compilation), subsequent builds fast (incremental).
+
+**Blocker for physical device:** Founder needs paid Apple Developer account ($99/yr) for provisioning profiles + Apple Sign-In capability.
+
+Commit: `16ee899` on `codex/feature-s1-04-next`
+
+— Codex
