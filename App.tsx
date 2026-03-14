@@ -6,13 +6,15 @@ import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AuthScreen } from './src/screens/AuthScreen';
 import { configureGoogleSignIn } from './src/services/auth/AuthService';
+import { ClientSeedService } from './src/services/seed/ClientSeedService';
 import { getAppEnvironment } from './src/shared/config/app-env';
 import { initializeFirebase, runStartupFirestoreRead } from './src/shared/firebase/firebase';
 import { verifyAppStorage } from './src/shared/storage/app-storage';
 import { colors } from './src/shared/theme/placeholder-theme';
 
 // DEV-ONLY: set to true to skip Firebase auth and use a mock user
-const DEV_BYPASS_AUTH = __DEV__;
+// Set to true to skip Firebase auth and use mock user (dev only)
+const DEV_BYPASS_AUTH = false;
 
 export default function App() {
   const [isStorageReady, setIsStorageReady] = useState<boolean | null>(null);
@@ -83,8 +85,40 @@ export default function App() {
     );
   }
 
+  // Seed route data + ensure UserDoc after auth
+  const [seedReady, setSeedReady] = useState(DEV_BYPASS_AUTH);
+  useEffect(() => {
+    if (!currentUser || DEV_BYPASS_AUTH) return;
+    let mounted = true;
+    (async () => {
+      try {
+        await ClientSeedService.ensureUserDoc({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          displayName: currentUser.displayName,
+        });
+        await ClientSeedService.seedRouteIfNeeded();
+      } catch (e) {
+        console.warn('[App] Seed/UserDoc error:', e);
+      }
+      if (mounted) setSeedReady(true);
+    })();
+    return () => { mounted = false; };
+  }, [currentUser]);
+
   if (!currentUser) {
     return <AuthScreen />;
+  }
+
+  if (!seedReady) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator color={colors.primary} size="large" />
+        <Text style={styles.loadingTitle}>Paila</Text>
+        <Text style={styles.loadingSubtitle}>Setting up your journey...</Text>
+        <StatusBar style="dark" />
+      </View>
+    );
   }
 
   return (

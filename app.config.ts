@@ -9,7 +9,8 @@ const bundleIdentifier = isProduction
   ? 'com.tpservices.paila'
   : 'com.tpservices.paila.dev';
 const firebaseProjectId = isProduction ? 'paila-prod' : 'paila-dev';
-const googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID ?? '';
+const googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID
+  ?? (isProduction ? '' : '271900438947-ed7gseapeki6tfp1t9aj5cff5eqjlsjs.apps.googleusercontent.com');
 
 // ─────────────────────────────────────────────
 // RevenueCat — API keys from EAS Secrets, NEVER hardcoded
@@ -73,6 +74,7 @@ const config: ExpoConfig = {
         'Paila uses this to show relevant ads. Your health data is never used for advertising.',
     },
     entitlements: {
+      'com.apple.developer.applesignin': ['Default'],
       'com.apple.developer.healthkit': true,
       'com.apple.developer.healthkit.access': ['health-records'],
       'com.apple.developer.healthkit.background-delivery': false,

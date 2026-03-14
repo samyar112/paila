@@ -209,9 +209,11 @@ export function JourneyHomeScreen({
       ))}
 
       {/* Dev Testing Panel */}
-      {__DEV__ && isDemo && (
+      {__DEV__ && (
         <DevTestingPanel
           journey={journey}
+          journeyId={journeyId}
+          userId={userId}
           route={route}
           milestones={milestones}
           nextMilestone={nextMilestone ?? null}
@@ -227,6 +229,8 @@ export function JourneyHomeScreen({
 
 function DevTestingPanel({
   journey,
+  journeyId,
+  userId,
   route,
   milestones,
   nextMilestone,
@@ -234,6 +238,8 @@ function DevTestingPanel({
   onOpenDelete,
 }: {
   journey: NonNullable<ReturnType<typeof useJourneyStore.getState>['journey']>;
+  journeyId: string | null;
+  userId: string;
   route: NonNullable<ReturnType<typeof useJourneyStore.getState>['route']>;
   milestones: ReturnType<typeof useJourneyStore.getState>['milestones'];
   nextMilestone: (typeof milestones)[number] | null;
@@ -261,6 +267,11 @@ function DevTestingPanel({
         totalSourceSteps,
       );
       useJourneyStore.setState({ journey: updatedJourney });
+
+      // Persist to Firestore for real journeys
+      if (journeyId && journeyId !== DEMO_JOURNEY_ID) {
+        void JourneyService.updateJourney(userId, journeyId, updatedJourney);
+      }
 
       if (events.length > 0) {
         const labels = events.map((e) => {

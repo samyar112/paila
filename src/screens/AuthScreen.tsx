@@ -51,16 +51,14 @@ export function AuthScreen() {
         </Pressable>
       )}
 
-      {Platform.OS === 'android' && (
-        <Pressable
-          accessibilityRole="button"
-          style={[styles.button, styles.googleButton]}
-          onPress={() => handleSignIn('google')}
-          disabled={status === 'loading'}
-        >
-          <Text style={styles.buttonText}>Continue with Google</Text>
-        </Pressable>
-      )}
+      <Pressable
+        accessibilityRole="button"
+        style={[styles.button, styles.googleButton]}
+        onPress={() => handleSignIn('google')}
+        disabled={status === 'loading'}
+      >
+        <Text style={styles.buttonText}>Continue with Google</Text>
+      </Pressable>
 
       {status === 'loading' && (
         <ActivityIndicator style={styles.spinner} color={colors.primary} />

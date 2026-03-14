@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { signOut } from '../services/auth/AuthService';
 import { getAppEnvironment, getFirebaseProjectId } from '../shared/config/app-env';
 import { colors, radii } from '../shared/theme/placeholder-theme';
 import { useJourneyStore } from '../stores/useJourneyStore';
-import { makeDemoJourney, DEMO_ROUTE, DEMO_MILESTONES, DEMO_JOURNEY_ID } from '../shared/dev/demo-journey';
+import { makeDemoJourney, DEMO_ROUTE, DEMO_MILESTONES, DEMO_JOURNEY_ID, EVEREST_ROUTE_ID } from '../shared/dev/demo-journey';
 
 export function ScaffoldShellScreen({
   firestoreCheck,
@@ -13,6 +14,8 @@ export function ScaffoldShellScreen({
   firestoreCheck: 'pending' | 'ok' | 'error' | 'skipped';
   userId: string;
 }) {
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const appEnv = getAppEnvironment();
   const firebaseProjectId = getFirebaseProjectId();
   const firestoreLabel = (() => {
@@ -45,12 +48,23 @@ export function ScaffoldShellScreen({
     });
   };
 
+  const startRealJourney = async (): Promise<void> => {
+    setStarting(true);
+    setStartError(null);
+    try {
+      await useJourneyStore.getState().startJourney(userId, EVEREST_ROUTE_ID, 1);
+    } catch (e) {
+      setStartError(e instanceof Error ? e.message : 'Failed to start journey');
+    } finally {
+      setStarting(false);
+    }
+  };
+
   return (
     <View style={styles.screen}>
-      <Text style={styles.title}>Paila Scaffold</Text>
+      <Text style={styles.title}>Paila</Text>
       <Text style={styles.subtitle}>
-        Navigation, MMKV, and environment wiring are in place. Sprint 1 can
-        build from this shell.
+        Your journey awaits. Choose how to begin.
       </Text>
       <Text style={styles.environment}>
         {appEnv === 'production' ? 'Production' : 'Development'} ·{' '}
@@ -58,13 +72,28 @@ export function ScaffoldShellScreen({
       </Text>
       <Text style={[styles.firebaseStatus, firestoreStyle]}>{firestoreLabel}</Text>
 
+      <Pressable
+        accessibilityRole="button"
+        style={styles.demoButton}
+        onPress={startRealJourney}
+        disabled={starting}
+      >
+        {starting ? (
+          <ActivityIndicator color={colors.background} />
+        ) : (
+          <Text style={styles.demoButtonText}>Begin Everest Journey</Text>
+        )}
+      </Pressable>
+
+      {startError && <Text style={styles.error}>{startError}</Text>}
+
       {__DEV__ && (
         <Pressable
           accessibilityRole="button"
-          style={styles.demoButton}
+          style={styles.secondaryButton}
           onPress={loadDemoJourney}
         >
-          <Text style={styles.demoButtonText}>Start Demo Journey</Text>
+          <Text style={styles.secondaryButtonText}>Load Demo (offline)</Text>
         </Pressable>
       )}
 
@@ -135,6 +164,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: colors.background,
+  },
+  error: {
+    marginTop: 12,
+    color: colors.error,
+    textAlign: 'center',
+    fontSize: 13,
+  },
+  secondaryButton: {
+    marginTop: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
   },
   signOutButton: {
     marginTop: 16,
