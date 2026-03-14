@@ -1,5 +1,6 @@
 export const STORAGE_KEYS = {
   // Navigation / onboarding
+  NAMASTE_SEEN: 'app:namaste_seen',
   HAS_ONBOARDED: 'app:has_onboarded',
   INTRO_SEEN: 'app:intro_seen',
 

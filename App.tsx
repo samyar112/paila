@@ -5,11 +5,13 @@ import auth, { type FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { AuthScreen } from './src/screens/AuthScreen';
+import { NamasteScreen } from './src/screens/NamasteScreen';
 import { configureGoogleSignIn } from './src/services/auth/AuthService';
 import { ClientSeedService } from './src/services/seed/ClientSeedService';
 import { getAppEnvironment } from './src/shared/config/app-env';
 import { initializeFirebase, runStartupFirestoreRead } from './src/shared/firebase/firebase';
-import { verifyAppStorage } from './src/shared/storage/app-storage';
+import { appStorage, verifyAppStorage } from './src/shared/storage/app-storage';
+import { STORAGE_KEYS } from './src/shared/storage/storage-keys';
 import { colors } from './src/shared/theme/placeholder-theme';
 
 // DEV-ONLY: set to true to skip Firebase auth and use a mock user
@@ -105,6 +107,24 @@ export default function App() {
     })();
     return () => { mounted = false; };
   }, [currentUser]);
+
+  const [namasteShown, setNamasteShown] = useState(
+    () => appStorage.getBoolean(STORAGE_KEYS.NAMASTE_SEEN) === true,
+  );
+
+  if (!namasteShown) {
+    return (
+      <>
+        <NamasteScreen
+          onComplete={() => {
+            appStorage.set(STORAGE_KEYS.NAMASTE_SEEN, true);
+            setNamasteShown(true);
+          }}
+        />
+        <StatusBar style="light" />
+      </>
+    );
+  }
 
   if (!currentUser) {
     return <AuthScreen />;
